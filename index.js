@@ -166,9 +166,11 @@ function announcementPackage(title,details,commit){
   return "🔒 **YOUR BC TRUCK WORKS UPDATE TO-DO**\n\n1. Wait for the website/deployment to show **READY**.\n2. Confirm the Discord bot is **ONLINE**.\n3. Test the feature that was changed.\n4. Check the website and Discord channels affected by the update.\n5. Copy the announcement below exactly and post it in **#📢│announcements**.\n6. Do not announce an update that has not passed the checks above.\n\n📢 **COPY/PASTE ANNOUNCEMENT**\n\n"+announcement;
 }
 async function sendOwnerUpdate(title,details,commit){
-  if(!OWNER_ID)return;
   try{
-    const owner=await client.users.fetch(OWNER_ID);
+    const guild=await client.guilds.fetch(GUILD_ID);
+    const ownerId=OWNER_ID || guild.ownerId;
+    if(!ownerId)return;
+    const owner=await client.users.fetch(ownerId);
     await owner.send(announcementPackage(title,details,commit));
   }catch(e){console.error("Owner update DM:",e.message);}
 }
@@ -232,7 +234,8 @@ client.on("interactionCreate",async interaction=>{
     if(interaction.commandName==="resume")return musicResume(interaction);
     if(interaction.commandName==="queue")return musicQueue(interaction);
     if(interaction.commandName==="update"){
-      if(!OWNER_ID||interaction.user.id!==OWNER_ID)return interaction.reply({content:"❌ This command is owner-only.",ephemeral:true});
+      const guildOwnerId=OWNER_ID || interaction.guild?.ownerId;
+      if(!guildOwnerId||interaction.user.id!==guildOwnerId)return interaction.reply({content:"❌ This command is owner-only.",ephemeral:true});
       const title=interaction.options.getString("title",true);
       const details=interaction.options.getString("details",true);
       return interaction.reply({content:announcementPackage(title,details),ephemeral:true});
