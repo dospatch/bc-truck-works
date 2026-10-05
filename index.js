@@ -247,7 +247,7 @@ async function checkGitHubUpdates(){
     const detailResponse=await fetch("https://api.github.com/repos/"+GITHUB_REPO+"/commits/"+commit.sha,{headers:{"Accept":"application/vnd.github+json","User-Agent":"BC-TRUCK-WORKS-Bot"}});
     const detail=detailResponse.ok?await detailResponse.json():commit;
     const message=(detail.commit?.message||"BC TRUCK WORKS code update").split("\n")[0];
-    await sendOwnerUpdate(message,"A new GitHub update was detected. The bot will also publish a rich update card in #📢│announcements.",detail.sha);
+    await sendOwnerUpdate(message,"A new GitHub update was detected. The bot will publish a clean community announcement after deployment checks.",detail.sha);
     await publishGitHubUpdate(detail);
   }catch(e){console.error("GitHub update check:",e.message);}
 }
