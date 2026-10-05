@@ -180,8 +180,7 @@ function announcementPackage(title,details,commit){
   const cleanTitle=title.trim()||"BC TRUCK WORKS Update";
   const cleanDetails=details.trim()||"The latest BC TRUCK WORKS update is now available.";
   const commitLine=commit?"\n\nUpdate reference: "+commit.slice(0,7):"";
-  const announcement="🚛 **BC TRUCK WORKS UPDATE**\n\n**"+cleanTitle+"**\n\n"+cleanDetails+"\n\nThank you for being part of BC TRUCK WORKS. More improvements are on the way."+commitLine;
-  return "🔒 **YOUR BC TRUCK WORKS UPDATE TO-DO**\n\n1. Wait for the website/deployment to show **READY**.\n2. Confirm the Discord bot is **ONLINE**.\n3. Test the feature that was changed.\n4. Check the website and Discord channels affected by the update.\n5. Copy the announcement below exactly and post it in **#📢│announcements**.\n6. Do not announce an update that has not passed the checks above.\n\n📢 **COPY/PASTE ANNOUNCEMENT**\n\n"+announcement;
+  return "🚛 **BC TRUCK WORKS UPDATE**\n\n**"+cleanTitle+"**\n\n"+cleanDetails+"\n\nThank you for being part of BC TRUCK WORKS. More improvements are on the way."+commitLine;
 }
 async function sendOwnerUpdate(title,details,commit){
   try{
