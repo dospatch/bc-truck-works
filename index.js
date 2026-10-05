@@ -175,6 +175,49 @@ async function sendOwnerUpdate(title,details,commit){
   }catch(e){console.error("Owner update DM:",e.message);}
 }
 let lastCommitSha=null;
+function updateCategoryData(message,files){
+  const text=String(message||"").toLowerCase();
+  const names=(files||[]).map(f=>String(f.filename||"").toLowerCase()).join(" ");
+  const added=[],improved=[],changed=[],fixed=[];
+  if(/add|new|create|introduc|feature|implement|launch/.test(text))added.push("New functionality or a new feature was added.");
+  if(/improv|enhanc|upgrade|better|optimiz|style|responsive/.test(text))improved.push("Existing functionality, performance, or presentation was improved.");
+  if(/fix|bug|error|repair|patch|correct/.test(text))fixed.push("Issues and reliability improvements were addressed.");
+  if(/change|update|refactor|modify|adjust|config|deploy/.test(text)||(!added.length&&!improved.length&&!fixed.length))changed.push("BC TRUCK WORKS platform code was updated.");
+  if(/dashboard|web\/app|web\/lib|platform/.test(names))changed.push("Driver Hub / website components were touched.");
+  if(/index\.js|discord|bot/.test(names))changed.push("Discord bot systems were touched.");
+  if(/telemetry|connector/.test(names))changed.push("ATS / ETS2 telemetry systems were touched.");
+  if(/package|workflow|github/.test(names))changed.push("Project/build infrastructure was touched.");
+  return {added:[...new Set(added)],improved:[...new Set(improved)],changed:[...new Set(changed)],fixed:[...new Set(fixed)]};
+}
+function updateEmbed(commit){
+  const message=(commit.commit?.message||"BC TRUCK WORKS Development Update").split("\n")[0];
+  const groups=updateCategoryData(message,commit.files||[]);
+  const embed=new EmbedBuilder()
+    .setColor(0x2f7fbf)
+    .setTitle("🚛 BC TRUCK WORKS • UPDATE")
+    .setDescription("A new BC TRUCK WORKS platform update has been added to the project.")
+    .addFields({name:"🆕 What's New",value:"**"+message+"**"})
+    .setTimestamp(new Date(commit.commit?.author?.date||Date.now()))
+    .setFooter({text:"BC TRUCK WORKS • Built for the road. Built for the community."});
+  if(groups.added.length)embed.addFields({name:"🆕 Added",value:groups.added.map(x=>"• "+x).join("\n")});
+  if(groups.improved.length)embed.addFields({name:"✨ Improved",value:groups.improved.map(x=>"• "+x).join("\n")});
+  if(groups.changed.length)embed.addFields({name:"🔄 Changed",value:groups.changed.map(x=>"• "+x).join("\n")});
+  if(groups.fixed.length)embed.addFields({name:"🛠️ Fixed",value:groups.fixed.map(x=>"• "+x).join("\n")});
+  embed.addFields(
+    {name:"🌐 Website",value:WEBSITE_URL,inline:true},
+    {name:"🔗 GitHub",value:"https://github.com/"+GITHUB_REPO+"/commit/"+commit.sha,inline:true},
+    {name:"📦 Commit",value:commit.sha.slice(0,7),inline:true}
+  );
+  return embed;
+}
+async function publishGitHubUpdate(commit){
+  try{
+    const guild=await client.guilds.fetch(GUILD_ID);
+    const channel=guild.channels.cache.find(c=>c.name==="📢│announcements"&&c.type===ChannelType.GuildText);
+    if(!channel)return;
+    await channel.send({embeds:[updateEmbed(commit)]});
+  }catch(e){console.error("GitHub Discord announcement:",e.message);}
+}
 async function checkGitHubUpdates(){
   try{
     const r=await fetch("https://api.github.com/repos/"+GITHUB_REPO+"/commits/main",{headers:{"Accept":"application/vnd.github+json","User-Agent":"BC-TRUCK-WORKS-Bot"}});
@@ -183,8 +226,11 @@ async function checkGitHubUpdates(){
     if(!lastCommitSha){lastCommitSha=commit.sha;return;}
     if(commit.sha===lastCommitSha)return;
     lastCommitSha=commit.sha;
-    const message=(commit.commit?.message||"BC TRUCK WORKS code update").split("\n")[0];
-    await sendOwnerUpdate(message,"A new GitHub update was pushed. Complete the checks below before announcing it to the community.",commit.sha);
+    const detailResponse=await fetch("https://api.github.com/repos/"+GITHUB_REPO+"/commits/"+commit.sha,{headers:{"Accept":"application/vnd.github+json","User-Agent":"BC-TRUCK-WORKS-Bot"}});
+    const detail=detailResponse.ok?await detailResponse.json():commit;
+    const message=(detail.commit?.message||"BC TRUCK WORKS code update").split("\n")[0];
+    await sendOwnerUpdate(message,"A new GitHub update was detected. The bot will also publish a rich update card in #📢│announcements.",detail.sha);
+    await publishGitHubUpdate(detail);
   }catch(e){console.error("GitHub update check:",e.message);}
 }
 
