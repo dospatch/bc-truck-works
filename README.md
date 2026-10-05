@@ -1,7 +1,7 @@
 # 🚛 BC TRUCK WORKS
 
 <p align="center">
-  <img src="web/public/bc-truck-works-logo.jpg" alt="BC TRUCK WORKS truck artwork" width="300">
+  <img src="web/public/bc-truck-works-logo.png" alt="BC TRUCK WORKS truck artwork" width="300">
 </p>
 
 <p align="center">
