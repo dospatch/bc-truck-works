@@ -76,23 +76,6 @@ async function ensureRoles(guild){
   }
   return result;
 }
-async function roleSetup(interaction){
-  if(!interaction.guild) return interaction.reply({content:"❌ Use this command inside the server.",ephemeral:true});
-  const guildOwnerId=OWNER_ID || interaction.guild.ownerId;
-  if(!guildOwnerId || interaction.user.id!==guildOwnerId) return interaction.reply({content:"❌ This command is owner-only.",ephemeral:true});
-  await interaction.deferReply({ephemeral:true});
-  try{
-    const roles=await ensureRoles(interaction.guild);
-    const ownerRole=roles.find(r=>r.name==="Owner");
-    if(ownerRole && !interaction.guild.members.cache.get(guildOwnerId)?.roles.cache.has(ownerRole.id)){
-      await interaction.guild.members.fetch(guildOwnerId).then(m=>m.roles.add(ownerRole)).catch(()=>{});
-    }
-    const updates=roles.find(r=>r.name===UPDATE_ROLE_NAME);
-    await interaction.editReply("✅ BC TRUCK WORKS roles fixed. Created/verified **"+roles.length+"** roles."+
-      (updates?"\n🔔 Update announcements will use <@&"+updates.id+">.":""));
-  }catch(e){console.error("ROLE SETUP ERROR:",e);await interaction.editReply("❌ Role setup failed: "+e.message);}
-}
-
 async function setup(interaction) {
   if (!interaction.guild) return interaction.reply({content:"❌ Use this command inside the server.",ephemeral:true});
   if (!interaction.memberPermissions.has(PermissionFlagsBits.Administrator)) return interaction.reply({content:"❌ Administrator permission is required.",ephemeral:true});
@@ -271,7 +254,6 @@ async function checkGitHubUpdates(){
 
 const commands=[
   new SlashCommandBuilder().setName("setup").setDescription("Build or rebuild the BC TRUCK WORKS Discord server.").setDefaultMemberPermissions(PermissionFlagsBits.Administrator.toString()),
-  new SlashCommandBuilder().setName("rolesetup").setDescription("Owner-only: create and fix BC TRUCK WORKS roles."),
   new SlashCommandBuilder().setName("status").setDescription("Show bot and server status."),
   new SlashCommandBuilder().setName("truckworks").setDescription("Show BC TRUCK WORKS information."),
   new SlashCommandBuilder().setName("telemetry").setDescription("Show ATS / ETS2 telemetry information."),
@@ -296,7 +278,7 @@ client.once("ready",async()=>{
   console.log("Logged in as:",client.user.tag);
   console.log("========================================");
   client.user.setPresence({activities:[{name:"BC TRUCK WORKS • ATS / ETS2",type:ActivityType.Watching}],status:"online"});
-  try{await registerCommands();await updateStatus();await checkGitHubUpdates();}catch(e){console.error("Startup:",e);}
+  try{await registerCommands();await ensureRoles(await client.guilds.fetch(GUILD_ID));await updateStatus();await checkGitHubUpdates();}catch(e){console.error("Startup:",e);}
   setInterval(updateStatus,300000);
   setInterval(checkGitHubUpdates,120000);
   console.log("BC TRUCK WORKS BOT IS ONLINE");
@@ -306,7 +288,6 @@ client.on("interactionCreate",async interaction=>{
   if(!interaction.isChatInputCommand())return;
   try{
     if(interaction.commandName==="setup")return setup(interaction);
-    if(interaction.commandName==="rolesetup")return roleSetup(interaction);
     if(interaction.commandName==="status")return interaction.reply({embeds:[statusEmbed()]});
     if(interaction.commandName==="truckworks")return interaction.reply({embeds:[new EmbedBuilder().setTitle("🚛 BC TRUCK WORKS").setDescription("Trucking community and driver platform for ATS and ETS2.").addFields({name:"🌐 Website",value:WEBSITE_URL},{name:"🛣️ Games",value:"American Truck Simulator and Euro Truck Simulator 2"}).setTimestamp()]});
     if(interaction.commandName==="telemetry")return interaction.reply({embeds:[new EmbedBuilder().setTitle("📡 TELEMETRY").setDescription("Driver-side telemetry connects ATS / ETS2 data to BC TRUCK WORKS.").addFields({name:"Help",value:"Use #📡│telemetry-help or #🎫│support."}).setTimestamp()]});
