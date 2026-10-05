@@ -1,8 +1,8 @@
 {
-  "apiUrl": "https://bctruckworks.vercel.app/api/telemetry",
-  "telemetryUrl": "http://127.0.0.1:25555/api/ets2/telemetry",
-  "telemetryApiKey": "PUT_YOUR_TELEMETRY_KEY_HERE",
-  "driverId": "YOUR_DRIVER_DATABASE_ID",
   "game": "ATS",
+  "driverId": "YOUR_DRIVER_ID",
+  "telemetryUrl": "http://127.0.0.1:25555/api/ets2/telemetry",
+  "apiUrl": "https://bctruckworks.vercel.app/api/telemetry",
+  "telemetryApiKey": "YOUR_TELEMETRY_API_KEY",
   "intervalMs": 2000
 }
