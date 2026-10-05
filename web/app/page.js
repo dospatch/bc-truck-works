@@ -61,10 +61,7 @@ export default function Home() {
           alt="BC TRUCK WORKS logo"
         />
 
-        <a
-          className="banner-action"
-          href="/api/auth/discord"
-        >
+        <a className="banner-action" href="/api/auth/discord">
           LOGIN TO DRIVER HUB →
         </a>
       </section>
@@ -117,14 +114,16 @@ export default function Home() {
           </div>
         </div>
 
-        {/* HERO TRUCK ARTWORK */}
+        {/* 720 x 1080 HERO ARTWORK */}
         <div className="hero-card">
           <div className="road-glow" />
 
           <img
             className="hero-art"
             src="/bc-truck-works-logo.jpg"
-            alt="BC TRUCK WORKS logo and truck artwork"
+            alt="BC TRUCK WORKS 720x1080 truck artwork"
+            width="720"
+            height="1080"
           />
 
           <div className="route">
@@ -160,9 +159,7 @@ export default function Home() {
               href={feature.href}
               key={feature.title}
             >
-              <div className="feature-icon">
-                {feature.icon}
-              </div>
+              <div className="feature-icon">{feature.icon}</div>
 
               <h3>{feature.title}</h3>
 
@@ -179,9 +176,7 @@ export default function Home() {
       {/* TELEMETRY */}
       <section className="telemetry" id="telemetry">
         <div>
-          <span className="section-label">
-            TELEMETRY READY
-          </span>
+          <span className="section-label">TELEMETRY READY</span>
 
           <h2>
             Turn your drive
@@ -190,15 +185,12 @@ export default function Home() {
           </h2>
 
           <p>
-            BC TRUCK WORKS is designed around connected driving.
-            Telemetry support can power mileage, trip, fleet, and
-            event experiences as the platform grows.
+            BC TRUCK WORKS is designed around connected driving. Telemetry
+            support can power mileage, trip, fleet, and event experiences as
+            the platform grows.
           </p>
 
-          <a
-            className="secondary"
-            href="/telemetry"
-          >
+          <a className="secondary" href="/telemetry">
             Open Telemetry Dashboard →
           </a>
         </div>
@@ -237,9 +229,7 @@ export default function Home() {
 
       {/* COMMUNITY */}
       <section className="community" id="community">
-        <span className="section-label">
-          THE NEXT MILE
-        </span>
+        <span className="section-label">THE NEXT MILE</span>
 
         <img
           className="community-logo"
@@ -250,22 +240,16 @@ export default function Home() {
         <h2>Ready to roll?</h2>
 
         <p>
-          BC TRUCK WORKS is being built for drivers, fleets,
-          convoys, and the trucking community.
+          BC TRUCK WORKS is being built for drivers, fleets, convoys, and the
+          trucking community.
         </p>
 
         <div className="actions">
-          <a
-            className="primary"
-            href="/dashboard"
-          >
+          <a className="primary" href="/dashboard">
             Enter Driver Hub <span>→</span>
           </a>
 
-          <a
-            className="secondary"
-            href="/events"
-          >
+          <a className="secondary" href="/events">
             View Events
           </a>
         </div>
@@ -275,9 +259,7 @@ export default function Home() {
       <footer>
         <div>
           <strong>BC TRUCK WORKS</strong>
-          <span>
-            Serious trucking. Connected drivers.
-          </span>
+          <span>Serious trucking. Connected drivers.</span>
         </div>
 
         <span>© 2026 BC TRUCK WORKS</span>
