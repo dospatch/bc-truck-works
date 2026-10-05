@@ -1,26 +1,3 @@
-export default function Dashboard() {
-  return <main className="platform">
-    <nav className="platform-nav">
-      <a className="platform-brand" href="/"><img src="/bc-truck-works-logo.svg" alt="" />BC TRUCK WORKS</a>
-      <div className="platform-links"><a href="/dashboard">Driver Hub</a><a href="/fleet">Fleet</a><a href="/events">Events</a><a href="/telemetry">Telemetry</a></div>
-      <a className="back" href="/">← Website</a>
-    </nav>
-    <section className="dashboard">
-      <span className="eyebrow">DRIVER HUB • PREVIEW</span>
-      <h1>Your road starts here.</h1>
-      <p className="muted">A central home for your BC TRUCK WORKS profile, trips, mileage, fleet activity, and events.</p>
-      <span className="status-pill"><i className="status-dot" /> Platform online</span>
-      <div className="metric-grid">
-        <div className="metric"><small>TOTAL MILES</small><strong>12,840</strong><span>+420 this month</span></div>
-        <div className="metric"><small>TRIPS</small><strong>86</strong><span>ATS + ETS2</span></div>
-        <div className="metric"><small>DELIVERIES</small><strong>74</strong><span>Successful</span></div>
-        <div className="metric"><small>DRIVER RANK</small><strong>#18</strong><span>Community leaderboard</span></div>
-      </div>
-      <div className="panel-grid">
-        <div className="panel"><h2>Driver activity</h2><div className="row"><strong>Latest trip</strong><span>Seattle → Portland • ATS</span></div><div className="row"><strong>Last telemetry</strong><span>Connected • 42 min ago</span></div><div className="row"><strong>Current fleet</strong><span>BC Logistics • Active</span></div><div className="row"><strong>Next event</strong><span>Community Convoy • Saturday</span></div></div>
-        <div className="panel"><h2>Quick access</h2><div className="action-grid"><a className="action" href="/fleet"><b>🚛 Fleet</b><span>Manage VTC & trucks</span></a><a className="action" href="/events"><b>🛣️ Events</b><span>View upcoming drives</span></a><a className="action" href="/telemetry"><b>📡 Telemetry</b><span>Review driving data</span></a><a className="action" href="/"><b>⚙️ Profile</b><span>Coming with login</span></a></div></div>
-      </div>
-    </section>
-    <footer className="footer-bar">BC TRUCK WORKS • Driver platform foundation • Authentication and live game data are next.</footer>
-  </main>
-}
+import {cookies} from "next/headers";import {getDb} from "@/lib/db";import crypto from "crypto";
+function sessionFrom(raw){try{if(!raw||!process.env.SESSION_SECRET)return null;const[p,s]=raw.split("."),e=crypto.createHmac("sha256",process.env.SESSION_SECRET).update(p).digest("base64url");if(!p||s!==e)return null;const d=JSON.parse(Buffer.from(p,"base64url").toString("utf8"));return d.exp>Date.now()/1000?d:null;}catch{return null;}}
+export default async function Dashboard(){let driver=null,t=null;try{const c=await cookies(),s=sessionFrom(c.get("bc_driver_session")?.value);if(s&&process.env.DATABASE_URL){const db=getDb(),d=await db.query("select id,display_name,game,total_miles,trips,deliveries,rank from drivers where discord_id=$1 limit 1",[s.discordId]);driver=d.rows[0]||null;if(driver){const q=await db.query("select game,speed,fuel,odometer,captured_at from telemetry where driver_id=$1 order by captured_at desc limit 1",[driver.id]);t=q.rows[0]||null;}}}catch{}return <main className="platform"><nav className="platform-nav"><a className="platform-brand" href="/"><img src="/bc-truck-works-logo.svg" alt=""/>BC TRUCK WORKS</a><div className="platform-links"><a href="/dashboard">Driver Hub</a><a href="/fleet">Fleet</a><a href="/events">Events</a><a href="/telemetry">Telemetry</a></div><a className="back" href="/">← Website</a></nav><section className="dashboard"><span className="eyebrow">DRIVER HUB • {driver?"LIVE":"LOGIN REQUIRED"}</span><h1>{driver?`Welcome back, ${driver.display_name}.`:"Your road starts here."}</h1><p className="muted">{driver?"Your real driver database and game telemetry are connected.":"Sign in with Discord to connect your real ATS / ETS2 driving data."}</p>{driver?<span className="status-pill"><i className="status-dot"/> LIVE DATA</span>:<a className="primary" href="/api/auth/discord">Login with Discord →</a>}<div className="metric-grid"><div className="metric"><small>TOTAL MILES</small><strong>{driver?Number(driver.total_miles).toLocaleString():"—"}</strong><span>Real driver total</span></div><div className="metric"><small>TRIPS</small><strong>{driver?driver.trips:"—"}</strong><span>ATS + ETS2</span></div><div className="metric"><small>DELIVERIES</small><strong>{driver?driver.deliveries:"—"}</strong><span>Recorded deliveries</span></div><div className="metric"><small>DRIVER RANK</small><strong>{driver?.rank?`#${driver.rank}`:"—"}</strong><span>Community leaderboard</span></div></div><div className="panel-grid"><div className="panel"><h2>Live game telemetry</h2><div className="row"><strong>Game</strong><span>{t?.game||"Waiting for game"}</span></div><div className="row"><strong>Speed</strong><span>{t?`${Number(t.speed).toFixed(0)} km/h`:"—"}</span></div><div className="row"><strong>Fuel</strong><span>{t?.fuel!=null?Number(t.fuel).toFixed(1):"—"}</span></div><div className="row"><strong>Odometer</strong><span>{t?.odometer!=null?Number(t.odometer).toFixed(1):"—"}</span></div><div className="row"><strong>Last telemetry</strong><span>{t?new Date(t.captured_at).toLocaleString():"Waiting for telemetry"}</span></div></div><div className="panel"><h2>Quick access</h2><div className="action-grid"><a className="action" href="/fleet"><b>🚛 Fleet</b><span>Manage VTC & trucks</span></a><a className="action" href="/events"><b>🛣️ Events</b><span>View upcoming drives</span></a><a className="action" href="/telemetry"><b>📡 Telemetry</b><span>Review driving data</span></a></div></div></div></section><footer className="footer-bar">BC TRUCK WORKS • Live ATS / ETS2 Driver Hub</footer></main>}
