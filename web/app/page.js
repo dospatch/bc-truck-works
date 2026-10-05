@@ -14,6 +14,16 @@ export default function Home() {
         <a className="nav-button" href="/dashboard">Driver Hub</a>
       </nav>
 
+      <section className="bc-banner" aria-label="BC TRUCK WORKS banner">
+        <div className="banner-copy">
+          <span className="banner-kicker">BC TRUCK WORKS</span>
+          <strong>THE ROAD STARTS HERE.</strong>
+          <span>ATS • ETS2 • FLEET • TELEMETRY • COMMUNITY</span>
+        </div>
+        <img src="/bc-truck-works-logo.svg" alt="BC TRUCK WORKS" />
+        <a className="banner-action" href="/dashboard">ENTER DRIVER HUB →</a>
+      </section>
+
       <section className="hero" id="top">
         <div className="hero-copy">
           <div className="badge"><span className="dot" /> ATS • ETS2 • TELEMETRY</div>
