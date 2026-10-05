@@ -78,7 +78,7 @@ async function setup(interaction) {
         if(type===ChannelType.GuildText && messages[name]) await channel.send(messages[name]);
       }
     }
-    await interaction.editReply("✅ BC TRUCK WORKS setup complete! Categories: "+categories+" | Channels: "+channels);
+    await interaction.editReply("✅ BC TRUCK WORKS setup complete! Categories: "+categories+" | Channels: "+channels).catch(async()=>{ await interaction.followUp({content:"✅ BC TRUCK WORKS setup complete! Categories: "+categories+" | Channels: "+channels,ephemeral:true}).catch(()=>{}); });
     setTimeout(updateStatus,3000);
   } catch(e){ console.error("SETUP ERROR:",e); await interaction.editReply("❌ Setup failed: "+e.message); }
 }
