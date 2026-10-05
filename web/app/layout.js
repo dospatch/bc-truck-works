@@ -1,4 +1,5 @@
 import "./globals.css";
+import "./platform.css";
 import { Analytics } from "@vercel/analytics/react";
 
 export const metadata = {
