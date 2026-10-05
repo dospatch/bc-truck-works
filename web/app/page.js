@@ -9,7 +9,10 @@ export default function Home() {
   return (
     <main>
       <nav className="nav">
-        <a className="brand" href="#top"><span className="brand-mark">BC</span><span>TRUCK WORKS</span></a>
+        <a className="brand" href="#top">
+          <span className="brand-mark">BC</span>
+          <span>TRUCK WORKS</span>
+        </a>
         <div className="nav-links">
           <a href="#features">Features</a>
           <a href="#telemetry">Telemetry</a>
@@ -20,7 +23,7 @@ export default function Home() {
 
       <section className="hero" id="top">
         <div className="hero-copy">
-          <div className="badge"><span className="dot" /> ATS • ETS2 • COMMUNITY</div>
+          <div className="badge"><span className="dot" /> ATS • ETS2 • TELEMETRY</div>
           <h1>Drive farther.<br /><em>Connect smarter.</em></h1>
           <p className="hero-text">BC TRUCK WORKS is a growing trucking platform built for drivers who want a connected, organized, and serious virtual trucking experience.</p>
           <div className="actions">
@@ -33,16 +36,20 @@ export default function Home() {
             <div><strong>24/7</strong><span>Community focused</span></div>
           </div>
         </div>
+
         <div className="hero-card">
           <div className="road-glow" />
-          <div className="truck-icon">🚛</div>
+          <img className="hero-logo" src="/bc-truck-works-logo.svg" alt="BC TRUCK WORKS logo" />
           <div className="route"><span>BC TRUCK WORKS</span><strong>ROAD • FLEET • COMMUNITY</strong></div>
           <div className="route-line"><i /><i /><i /><i /></div>
         </div>
       </section>
 
       <section className="section" id="features">
-        <div className="section-heading"><span>WHAT WE DO</span><h2>Everything you need<br />to stay on the road.</h2></div>
+        <div className="section-heading">
+          <span>WHAT WE DO</span>
+          <h2>Everything you need<br />to stay on the road.</h2>
+        </div>
         <div className="feature-grid">
           {features.map((feature) => (
             <article className="feature" key={feature.title}>
@@ -74,12 +81,16 @@ export default function Home() {
 
       <section className="community" id="community">
         <span className="section-label">THE NEXT MILE</span>
+        <img className="community-logo" src="/bc-truck-works-logo.svg" alt="BC TRUCK WORKS" />
         <h2>Ready to roll?</h2>
         <p>BC TRUCK WORKS is being built for drivers, fleets, convoys, and the trucking community.</p>
         <a className="primary" href="https://discord.com" target="_blank" rel="noreferrer">Join the Community <span>→</span></a>
       </section>
 
-      <footer><div><strong>BC TRUCK WORKS</strong><span>Serious trucking. Connected drivers.</span></div><span>© 2026 BC TRUCK WORKS</span></footer>
+      <footer>
+        <div><strong>BC TRUCK WORKS</strong><span>Serious trucking. Connected drivers.</span></div>
+        <span>© 2026 BC TRUCK WORKS</span>
+      </footer>
     </main>
   );
 }
