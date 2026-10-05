@@ -1,0 +1,45 @@
+name: Build BC TRUCK WORKS Windows Installer
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install connector dependencies
+        working-directory: connector
+        run: npm install
+
+      - name: Build connector EXE
+        working-directory: connector
+        run: npm run build:windows
+
+      - name: Install Inno Setup
+        shell: powershell
+        run: |
+          choco install innosetup --no-progress -y
+
+      - name: Build installer
+        shell: powershell
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" `
+            "installer\BCTruckWorks.iss"
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: BC-TRUCK-WORKS-Windows-Installer
+          path: release/BC-TRUCK-WORKS-Setup.exe
