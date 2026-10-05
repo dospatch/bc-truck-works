@@ -1,12 +1,22 @@
+/* =========================================
+   BC TRUCK WORKS HERO CARD
+   ========================================= */
+
 .hero-card {
   position: relative;
+
+  width: 100%;
   min-height: 390px;
   height: 390px;
+
   overflow: hidden;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
   padding: 12px;
+
   border-radius: 28px;
 
   background:
@@ -15,7 +25,11 @@
       rgba(0, 140, 255, 0.22),
       transparent 60%
     ),
-    linear-gradient(145deg, #071a2a, #02070c 75%);
+    linear-gradient(
+      145deg,
+      #071a2a,
+      #02070c 75%
+    );
 
   border: 1px solid rgba(52, 178, 255, 0.45);
 
@@ -24,16 +38,24 @@
     inset 0 0 40px rgba(0, 132, 255, 0.12);
 }
 
+/* =========================================
+   720 x 1080 TRUCK ARTWORK
+   ========================================= */
+
 .hero-art {
   position: relative;
+
   z-index: 2;
 
   display: block;
 
-  width: 100%;
+  width: auto;
   height: 100%;
 
-  max-width: 420px;
+  max-width: 100%;
+  max-height: 100%;
+
+  aspect-ratio: 720 / 1080;
 
   object-fit: contain;
   object-position: center;
@@ -45,8 +67,13 @@
     drop-shadow(0 0 18px rgba(0, 140, 255, 0.18));
 }
 
+/* =========================================
+   ROAD GLOW
+   ========================================= */
+
 .hero-card .road-glow {
   position: absolute;
+
   z-index: 1;
 
   left: 8%;
@@ -62,12 +89,18 @@
   border-radius: 50%;
 }
 
+/* =========================================
+   ROUTE TEXT
+   ========================================= */
+
 .hero-card .route {
   position: absolute;
+
   z-index: 3;
 
   left: 0;
   right: 0;
+
   bottom: 20px;
 
   text-align: center;
@@ -80,6 +113,7 @@
 
   font-size: 14px;
   font-weight: 800;
+
   letter-spacing: 3px;
 
   color: #ffffff;
@@ -91,33 +125,97 @@
   margin-top: 4px;
 
   font-size: 11px;
+
   letter-spacing: 2px;
 
   color: #67c8ff;
 }
 
+/* =========================================
+   ROUTE LINE
+   ========================================= */
+
+.hero-card .route-line {
+  position: absolute;
+
+  z-index: 3;
+
+  left: 50%;
+  bottom: 8px;
+
+  transform: translateX(-50%);
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  pointer-events: none;
+}
+
+.hero-card .route-line i {
+  display: block;
+
+  width: 24px;
+  height: 2px;
+
+  background: #32baff;
+
+  box-shadow:
+    0 0 8px rgba(50, 186, 255, 0.8);
+}
+
+/* =========================================
+   OLD LOGO - NO LONGER USED IN HERO
+   ========================================= */
+
+.hero-logo {
+  display: none;
+}
+
+/* =========================================
+   TABLET
+   ========================================= */
+
 @media (max-width: 850px) {
   .hero-card {
     min-height: 360px;
     height: 360px;
+
     padding: 10px;
   }
 
   .hero-art {
-    max-width: 360px;
+    height: 100%;
+    max-width: 100%;
+  }
+
+  .hero-card .route {
+    bottom: 18px;
   }
 }
+
+/* =========================================
+   MOBILE
+   ========================================= */
 
 @media (max-width: 520px) {
   .hero-card {
     min-height: 330px;
     height: 330px;
+
     padding: 8px;
+
     border-radius: 22px;
   }
 
   .hero-art {
-    max-width: 310px;
+    height: 100%;
+    max-width: 100%;
+
+    border-radius: 16px;
   }
 
   .hero-card .route {
@@ -126,9 +224,20 @@
 
   .hero-card .route span {
     font-size: 11px;
+    letter-spacing: 2px;
   }
 
   .hero-card .route strong {
     font-size: 9px;
+    letter-spacing: 1.5px;
+  }
+
+  .hero-card .route-line {
+    bottom: 5px;
+    gap: 5px;
+  }
+
+  .hero-card .route-line i {
+    width: 16px;
   }
 }
