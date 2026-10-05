@@ -23,7 +23,7 @@ jobs:
         working-directory: connector
         run: npm install
 
-      - name: Build connector EXE
+      - name: Build Windows connector
         working-directory: connector
         run: npm run build:windows
 
@@ -32,13 +32,13 @@ jobs:
         run: |
           choco install innosetup --no-progress -y
 
-      - name: Build installer
+      - name: Build BC TRUCK WORKS installer
         shell: powershell
         run: |
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" `
             "installer\BCTruckWorks.iss"
 
-      - name: Upload installer
+      - name: Upload Windows installer
         uses: actions/upload-artifact@v4
         with:
           name: BC-TRUCK-WORKS-Windows-Installer
