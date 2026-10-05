@@ -20,6 +20,7 @@ export default function Home() {
           <strong>THE ROAD STARTS HERE.</strong>
           <span>ATS • ETS2 • FLEET • TELEMETRY • COMMUNITY</span>
         </div>
+        <img className="banner-logo" src="/bc-truck-works-logo.svg" alt="BC TRUCK WORKS logo" />
         <a className="banner-action" href="/dashboard">ENTER DRIVER HUB →</a>
       </section>
 
