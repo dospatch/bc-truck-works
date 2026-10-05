@@ -11,7 +11,7 @@ export default function Home() {
       <nav className="nav">
         <a className="brand" href="#top"><span className="brand-mark">BC</span><span>TRUCK WORKS</span></a>
         <div className="nav-links"><a href="#features">Features</a><a href="/fleet">Fleet</a><a href="/telemetry">Telemetry</a><a href="/events">Events</a></div>
-        <a className="nav-button" href="/dashboard">Driver Hub</a>
+        <a className="nav-button" href="/api/auth/discord">🔐 Login</a>
       </nav>
 
       <section className="bc-banner" aria-label="BC TRUCK WORKS banner">
@@ -21,7 +21,7 @@ export default function Home() {
           <span>ATS • ETS2 • FLEET • TELEMETRY • COMMUNITY</span>
         </div>
         <img className="banner-logo" src="/bc-truck-works-logo.svg" alt="BC TRUCK WORKS logo" />
-        <a className="banner-action" href="/dashboard">ENTER DRIVER HUB →</a>
+        <a className="banner-action" href="/api/auth/discord">LOGIN TO DRIVER HUB →</a>
       </section>
 
       <section className="hero" id="top">
