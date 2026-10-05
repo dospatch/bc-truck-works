@@ -1,0 +1,2 @@
+import {NextResponse} from "next/server";import {readSession} from "@/lib/session";
+export async function GET(request){const session=readSession(request);return NextResponse.json({authenticated:!!session,driver:session||null});}
