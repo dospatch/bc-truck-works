@@ -3,7 +3,7 @@ import {NextResponse} from "next/server";
 function liveAnswer(message,driver,telemetry){
  const q=String(message||"").toLowerCase(),t=telemetry||{},d=driver||{};
  const speed=t.speed!=null?Number(t.speed):null,fuel=t.fuel!=null?Number(t.fuel):null,odo=t.odometer!=null?Number(t.odometer):null;
- if(/speed|fast|mph|km\\/h|kmh/.test(q)&&speed!=null)return "You are currently traveling at "+speed.toFixed(0)+" km/h in "+(t.game||d.game||"your truck")+".";
+ if(/speed|fast|mph|km\/h|kmh/.test(q)&&speed!=null)return "You are currently traveling at "+speed.toFixed(0)+" km/h in "+(t.game||d.game||"your truck")+".";
  if(/fuel|gas|diesel/.test(q)&&fuel!=null)return "Your current fuel reading is "+fuel.toFixed(1)+". Keep an eye on your fuel level during the drive.";
  if(/odometer|odo/.test(q)&&odo!=null)return "Your current odometer reading is "+odo.toFixed(1)+".";
  if(/mile|miles|distance/.test(q))return "Your BC TRUCK WORKS account has "+Number(d.total_miles||0).toLocaleString()+" tracked miles.";
