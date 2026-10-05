@@ -20,7 +20,7 @@ export default function Home() {
           <strong>THE ROAD STARTS HERE.</strong>
           <span>ATS • ETS2 • FLEET • TELEMETRY • COMMUNITY</span>
         </div>
-        <img className="banner-logo" src="/bc-truck-works-logo.svg" alt="BC TRUCK WORKS logo" />
+        <img className="banner-logo" src="/bc-truck-works-logo-720x1080.png" alt="BC TRUCK WORKS logo" />
         <a className="banner-action" href="/dashboard">ENTER DRIVER HUB →</a>
       </section>
 
@@ -34,7 +34,7 @@ export default function Home() {
         </div>
         <div className="hero-card">
           <div className="road-glow" />
-          <img className="hero-logo" src="/bc-truck-works-logo.svg" alt="BC TRUCK WORKS logo" />
+          <img className="hero-logo" src="/bc-truck-works-logo-720x1080.png" alt="BC TRUCK WORKS logo" />
           <div className="route"><span>BC TRUCK WORKS</span><strong>ROAD • FLEET • COMMUNITY</strong></div>
           <div className="route-line"><i /><i /><i /><i /></div>
         </div>
@@ -52,7 +52,7 @@ export default function Home() {
 
       <section className="community" id="community">
         <span className="section-label">THE NEXT MILE</span>
-        <img className="community-logo" src="/bc-truck-works-logo.svg" alt="BC TRUCK WORKS" />
+        <img className="community-logo" src="/bc-truck-works-logo-720x1080.png" alt="BC TRUCK WORKS" />
         <h2>Ready to roll?</h2><p>BC TRUCK WORKS is being built for drivers, fleets, convoys, and the trucking community.</p>
         <div className="actions"><a className="primary" href="/dashboard">Enter Driver Hub <span>→</span></a><a className="secondary" href="/events">View Events</a></div>
       </section>
