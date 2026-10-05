@@ -10,6 +10,7 @@ const CLIENT_ID = process.env.DISCORD_CLIENT_ID || "1556044045195935775";
 const GUILD_ID = process.env.DISCORD_GUILD_ID || "1546265801500266611";
 const WEBSITE_URL = process.env.TRUCKWORKS_WEBSITE_URL || "https://bctruckworks.vercel.app";
 const OWNER_ID = process.env.OWNER_DISCORD_ID || "";
+const UPDATE_ROLE_NAME = process.env.UPDATE_ROLE_NAME || "Updates";
 const GITHUB_REPO = "dospatch/bc-truck-works";
 
 if (!TOKEN) { console.error("DISCORD_TOKEN is missing."); process.exit(1); }
@@ -56,6 +57,40 @@ async function updateStatus() {
     for (const m of old.values()) if (m.author.id === client.user.id) await m.delete().catch(()=>{});
     await channel.send({embeds:[statusEmbed()]});
   } catch(e) { console.error("Status update:",e.message); }
+}
+
+async function ensureRoles(guild){
+  const roles=[
+    ["Owner",0xE74C3C],["Co-Owner",0xFF6B35],["TruckWorks Director",0x9B59B6],["TruckWorks Manager",0x3498DB],
+    ["Lead Developer",0x1ABC9C],["Developer",0x2ECC71],["Web Developer",0x00A8FF],["Bot Developer",0x5865F2],
+    ["Senior Moderator",0xF1C40F],["Moderator",0xE67E22],["Support Team",0x2ECC71],
+    ["TruckWorks Creator",0xE91E63],["Verified Creator",0xC27CFF],["Creator Partner",0x9B59B6],
+    [UPDATE_ROLE_NAME,0x57F287],["Driver",0x95A5A6],["VTC Owner",0xF39C12]
+  ];
+  const result=[];
+  for(const [name,color] of roles){
+    let role=guild.roles.cache.find(r=>r.name===name);
+    if(!role) role=await guild.roles.create({name,color,mentionable:name===UPDATE_ROLE_NAME,reason:"BC TRUCK WORKS role setup"});
+    else if(name===UPDATE_ROLE_NAME && !role.mentionable) await role.setMentionable(true,"BC TRUCK WORKS update announcements").catch(()=>{});
+    result.push(role);
+  }
+  return result;
+}
+async function roleSetup(interaction){
+  if(!interaction.guild) return interaction.reply({content:"❌ Use this command inside the server.",ephemeral:true});
+  const guildOwnerId=OWNER_ID || interaction.guild.ownerId;
+  if(!guildOwnerId || interaction.user.id!==guildOwnerId) return interaction.reply({content:"❌ This command is owner-only.",ephemeral:true});
+  await interaction.deferReply({ephemeral:true});
+  try{
+    const roles=await ensureRoles(interaction.guild);
+    const ownerRole=roles.find(r=>r.name==="Owner");
+    if(ownerRole && !interaction.guild.members.cache.get(guildOwnerId)?.roles.cache.has(ownerRole.id)){
+      await interaction.guild.members.fetch(guildOwnerId).then(m=>m.roles.add(ownerRole)).catch(()=>{});
+    }
+    const updates=roles.find(r=>r.name===UPDATE_ROLE_NAME);
+    await interaction.editReply("✅ BC TRUCK WORKS roles fixed. Created/verified **"+roles.length+"** roles."+
+      (updates?"\n🔔 Update announcements will use <@&"+updates.id+">.":""));
+  }catch(e){console.error("ROLE SETUP ERROR:",e);await interaction.editReply("❌ Role setup failed: "+e.message);}
 }
 
 async function setup(interaction) {
@@ -215,7 +250,7 @@ async function publishGitHubUpdate(commit){
     const guild=await client.guilds.fetch(GUILD_ID);
     const channel=guild.channels.cache.find(c=>c.name==="📢│announcements"&&c.type===ChannelType.GuildText);
     if(!channel)return;
-    await channel.send({embeds:[updateEmbed(commit)]});
+    const updates=guild.roles.cache.find(r=>r.name===UPDATE_ROLE_NAME);\n    await channel.send({content:updates?"<@&"+updates.id+">":"",embeds:[updateEmbed(commit)],allowedMentions:{roles:updates?[updates.id]:[]}});
   }catch(e){console.error("GitHub Discord announcement:",e.message);}
 }
 async function checkGitHubUpdates(){
@@ -236,6 +271,7 @@ async function checkGitHubUpdates(){
 
 const commands=[
   new SlashCommandBuilder().setName("setup").setDescription("Build or rebuild the BC TRUCK WORKS Discord server.").setDefaultMemberPermissions(PermissionFlagsBits.Administrator.toString()),
+  new SlashCommandBuilder().setName("rolesetup").setDescription("Owner-only: create and fix BC TRUCK WORKS roles."),
   new SlashCommandBuilder().setName("status").setDescription("Show bot and server status."),
   new SlashCommandBuilder().setName("truckworks").setDescription("Show BC TRUCK WORKS information."),
   new SlashCommandBuilder().setName("telemetry").setDescription("Show ATS / ETS2 telemetry information."),
@@ -270,6 +306,7 @@ client.on("interactionCreate",async interaction=>{
   if(!interaction.isChatInputCommand())return;
   try{
     if(interaction.commandName==="setup")return setup(interaction);
+    if(interaction.commandName==="rolesetup")return roleSetup(interaction);
     if(interaction.commandName==="status")return interaction.reply({embeds:[statusEmbed()]});
     if(interaction.commandName==="truckworks")return interaction.reply({embeds:[new EmbedBuilder().setTitle("🚛 BC TRUCK WORKS").setDescription("Trucking community and driver platform for ATS and ETS2.").addFields({name:"🌐 Website",value:WEBSITE_URL},{name:"🛣️ Games",value:"American Truck Simulator and Euro Truck Simulator 2"}).setTimestamp()]});
     if(interaction.commandName==="telemetry")return interaction.reply({embeds:[new EmbedBuilder().setTitle("📡 TELEMETRY").setDescription("Driver-side telemetry connects ATS / ETS2 data to BC TRUCK WORKS.").addFields({name:"Help",value:"Use #📡│telemetry-help or #🎫│support."}).setTimestamp()]});
