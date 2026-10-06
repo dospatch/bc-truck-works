@@ -8,9 +8,9 @@ export const metadata = {
     "BC TRUCK WORKS — connected trucking for American Truck Simulator and Euro Truck Simulator 2.",
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: "/bc-truck-works-logo.svg",
-    shortcut: "/bc-truck-works-logo.svg",
-    apple: "/bc-truck-works-logo.svg",
+    icon: "/bc-truck-works-logo.png",
+    shortcut: "/bc-truck-works-logo.png",
+    apple: "/bc-truck-works-logo.png",
   },
   themeColor: "#0b6cff",
 };
