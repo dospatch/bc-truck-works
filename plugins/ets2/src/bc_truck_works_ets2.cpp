@@ -1,8 +1,8 @@
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 
-#include <windows.h>
 #include <winsock2.h>
+#include <windows.h>
 
 #include <atomic>
 #include <cmath>
@@ -80,7 +80,7 @@ std::string telemetry_json()
         sizeof(buffer),
         "{\"game\":\"ETS2\",\"speed\":%.3f,\"fuel\":%.3f,\"odometer\":%.3f,"
         "\"position\":{\"x\":%.3f,\"y\":%.3f,\"z\":%.3f},\"paused\":%s}",
-        g_speed.load(),
+        (g_speed.load() * 3.6f),
         g_fuel.load(),
         g_odometer.load(),
         g_x.load(),
