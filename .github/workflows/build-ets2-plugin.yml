@@ -1,0 +1,44 @@
+name: Build BC TRUCK WORKS ETS2 Plugin
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "plugins/ets2/**"
+      - ".github/workflows/build-ets2-plugin.yml"
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download official SCS Telemetry SDK
+        shell: powershell
+        run: |
+          Invoke-WebRequest -Uri "https://download.eurotrucksimulator2.com/scs_sdk_1_15.zip" -OutFile "$env:RUNNER_TEMP\scs_sdk_1_15.zip"
+          Expand-Archive -Path "$env:RUNNER_TEMP\scs_sdk_1_15.zip" -DestinationPath "$env:RUNNER_TEMP\scs_sdk_1_15" -Force
+
+      - name: Configure ETS2 plugin
+        shell: powershell
+        run: |
+          $sdk = "$env:RUNNER_TEMP\scs_sdk_1_15\include"
+          if (-not (Test-Path $sdk)) { throw "SCS SDK include directory was not found after extraction." }
+          cmake -S plugins/ets2 -B build/ets2 -DSCS_SDK_ROOT="$sdk"
+
+      - name: Build ETS2 plugin
+        shell: powershell
+        run: cmake --build build/ets2 --config Release
+
+      - name: Verify ETS2 DLL
+        shell: powershell
+        run: |
+          $dll = "build/ets2/Release/BCTruckWorksETS2.dll"
+          if (-not (Test-Path $dll)) { throw "ETS2 plugin DLL was not produced." }
+
+      - name: Upload ETS2 plugin
+        uses: actions/upload-artifact@v4
+        with:
+          name: BCTruckWorksETS2
+          path: build/ets2/Release/BCTruckWorksETS2.dll
