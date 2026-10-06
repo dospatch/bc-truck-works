@@ -57,7 +57,7 @@ export default function Telemetry() {
       <nav className="platform-nav">
         <a className="platform-brand" href="/">
           <img
-            src="/bc-truck-works-logo.svg"
+            src="/bc-truck-works-logo.png"
             alt="BC TRUCK WORKS"
           />
           BC TRUCK WORKS
