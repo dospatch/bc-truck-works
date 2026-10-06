@@ -1,0 +1,45 @@
+name: Build BC TRUCK WORKS ATS Plugin
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "plugins/ats/**"
+      - ".github/workflows/build-ats-plugin.yml"
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download official SCS Telemetry SDK
+        shell: powershell
+        run: |
+          Invoke-WebRequest -Uri "https://download.eurotrucksimulator2.com/scs_sdk_1_15.zip" -OutFile "$env:RUNNER_TEMP\scs_sdk_1_15.zip"
+          Expand-Archive -Path "$env:RUNNER_TEMP\scs_sdk_1_15.zip" -DestinationPath "$env:RUNNER_TEMP\scs_sdk_1_15" -Force
+
+      - name: Configure ATS plugin
+        shell: powershell
+        run: |
+          $sdk = "$env:RUNNER_TEMP\scs_sdk_1_15\include"
+          if (-not (Test-Path $sdk)) { throw "SCS SDK include directory was not found after extraction." }
+          cmake -S plugins/ats -B build/ats -DSCS_SDK_ROOT="$sdk"
+
+      - name: Build ATS plugin
+        shell: powershell
+        run: |
+          cmake --build build/ats --config Release
+
+      - name: Verify ATS DLL
+        shell: powershell
+        run: |
+          $dll = "build/ats/Release/BCTruckWorksATS.dll"
+          if (-not (Test-Path $dll)) { throw "ATS plugin DLL was not produced." }
+
+      - name: Upload ATS plugin
+        uses: actions/upload-artifact@v4
+        with:
+          name: BCTruckWorksATS
+          path: build/ats/Release/BCTruckWorksATS.dll
