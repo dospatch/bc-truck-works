@@ -55,13 +55,14 @@ const telemetryUrl =
   "http://127.0.0.1:25555/api/ets2/telemetry";
 
 const apiUrl = config.apiUrl;
+
+const game =
+  String(config.game || "ATS").toUpperCase();
+
 const commandsUrl = config.commandsUrl || (apiUrl ? apiUrl.replace(/\/api\/telemetry\/?$/, "/api/game-commands") : "");
 const connectorKey = config.connectorCommandKey || "";
 const allowGameInput = config.allowGameInput === true;
 const gameWindowTitle = config.gameWindowTitle || (game === "ETS2" ? "Euro Truck Simulator 2" : "American Truck Simulator");
-
-const game =
-  String(config.game || "ATS").toUpperCase();
 
 function log(message) {
   const timestamp = new Date().toISOString();
