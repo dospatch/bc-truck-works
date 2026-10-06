@@ -8,7 +8,7 @@ export default function Events() {
   return (
     <main className="platform">
       <nav className="platform-nav">
-        <a className="platform-brand" href="/"><img src="/bc-truck-works-logo.svg" alt="" />BC TRUCK WORKS</a>
+        <a className="platform-brand" href="/"><img src="/bc-truck-works-logo.png" alt="" />BC TRUCK WORKS</a>
         <div className="platform-links">
           <a href="/dashboard">Driver Hub</a><a href="/fleet">Fleet</a><a href="/events">Events</a><a href="/telemetry">Telemetry</a>
         </div>
