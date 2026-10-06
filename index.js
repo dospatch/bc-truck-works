@@ -1,6 +1,6 @@
 const {
   Client, GatewayIntentBits, ActivityType, ChannelType, PermissionFlagsBits,
-  SlashCommandBuilder, EmbedBuilder, REST, Routes
+  SlashCommandBuilder, EmbedBuilder, REST, Routes, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle
 } = require("discord.js");
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnectionStatus, entersState } = require("@discordjs/voice");
 const play = require("play-dl");
@@ -46,6 +46,73 @@ function statusEmbed() {
       {name:"🎵 Music",value:"🟢 Enabled",inline:true},
       {name:"⚙️ Version",value:"2.1.0",inline:true}
     ).setTimestamp().setFooter({text:"BC TRUCK WORKS"});
+}
+
+const ticketCategories = {
+  support: { label:"General Support", emoji:"🆘", description:"Driver Hub, account, community, or general help." },
+  bug: { label:"Bug Report", emoji:"🐛", description:"Report a problem or unexpected behavior." },
+  telemetry: { label:"Telemetry Help", emoji:"📡", description:"ATS/ETS2 telemetry, connector, mileage, or data issues." },
+  technical: { label:"Technical Help", emoji:"💻", description:"Website, bot, installer, or technical setup help." }
+};
+
+function ticketPanelComponents(){
+  return [new ActionRowBuilder().addComponents(
+    new StringSelectMenuBuilder()
+      .setCustomId("bc_ticket_category")
+      .setPlaceholder("Choose a support category...")
+      .addOptions(Object.entries(ticketCategories).map(([value,c])=>({label:c.label,value,description:c.description,emoji:c.emoji})))
+  )];
+}
+
+async function postSupportPanel(guild){
+  const channel=guild.channels.cache.find(c=>c.name==="🎫│support"&&c.type===ChannelType.GuildText);
+  if(!channel)return;
+  const recent=await channel.messages.fetch({limit:50}).catch(()=>null);
+  if(recent && recent.some(m=>m.author.id===client.user.id && m.components?.some(row=>row.components?.some(c=>c.customId==="bc_ticket_category")))) return;
+  const embed=new EmbedBuilder()
+    .setColor(0x2f7fbf)
+    .setTitle("🎫 BC TRUCK WORKS SUPPORT")
+    .setDescription("Need help? Choose the category that best matches your issue and a private support ticket will be created for you.")
+    .addFields({name:"🌐 Support Center",value:WEBSITE_URL+"/support"},{name:"📋 Ticket Categories",value:"🆘 General Support\n🐛 Bug Report\n📡 Telemetry Help\n💻 Technical Help"})
+    .setFooter({text:"BC TRUCK WORKS • Support Team"});
+  await channel.send({embeds:[embed],components:ticketPanelComponents()}).catch(e=>console.error("Support panel:",e.message));
+}
+
+async function createTicket(interaction, key){
+  const cfg=ticketCategories[key];
+  if(!cfg)return;
+  const guild=interaction.guild;
+  const existing=guild.channels.cache.find(c=>c.type===ChannelType.GuildText && c.topic===("BC-TICKET:"+interaction.user.id));
+  if(existing)return interaction.reply({content:"❌ You already have an open support ticket: <#"+existing.id+">",ephemeral:true});
+  const supportCategory=guild.channels.cache.find(c=>c.name==="🆘 SUPPORT"&&c.type===ChannelType.GuildCategory);
+  const safeName=interaction.user.username.toLowerCase().replace(/[^a-z0-9-]/g,"").slice(0,18)||"driver";
+  const channel=await guild.channels.create({
+    name:"ticket-"+safeName,
+    type:ChannelType.GuildText,
+    parent:supportCategory?.id,
+    topic:"BC-TICKET:"+interaction.user.id,
+    permissionOverwrites:[
+      {id:guild.roles.everyone.id,deny:[PermissionFlagsBits.ViewChannel]},
+      {id:interaction.user.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.AttachFiles]},
+      {id:client.user.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.ManageChannels,PermissionFlagsBits.ManageMessages]}
+    ]
+  });
+  const supportRole=guild.roles.cache.find(r=>r.name==="Support Team");
+  const roleMention=supportRole?"<@&"+supportRole.id> ":"";
+  const embed=new EmbedBuilder()
+    .setColor(0x2f7fbf)
+    .setTitle("🎫 BC TRUCK WORKS SUPPORT TICKET")
+    .setDescription("Welcome! A member of the Support Team will help you here.")
+    .addFields(
+      {name:"📂 Ticket Category",value:cfg.emoji+" **"+cfg.label+"**",inline:true},
+      {name:"👤 Driver",value:"<@"+interaction.user.id+">",inline:true},
+      {name:"📝 What to include",value:"Please explain the issue, what you were doing, and any error messages you received."},
+      {name:"🌐 Support Center",value:WEBSITE_URL+"/support"}
+    ).setTimestamp();
+  const closeRow=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("bc_ticket_close").setLabel("Close Ticket").setEmoji("🔒").setStyle(ButtonStyle.Danger));
+  await channel.send({content:roleMention+"<@"+interaction.user.id+">",embeds:[embed],components:[closeRow],allowedMentions:{users:[interaction.user.id],roles:supportRole?[supportRole.id]:[]}})
+    .catch(e=>console.error("Ticket message:",e.message));
+  return interaction.reply({content:"✅ Your **"+cfg.label+"** ticket has been created: <#"+channel.id+">",ephemeral:true});
 }
 
 async function updateStatus() {
@@ -97,7 +164,7 @@ async function setup(interaction) {
       }
     }
     await interaction.editReply("✅ BC TRUCK WORKS setup complete! Categories: "+categories+" | Channels: "+channels).catch(async()=>{ await interaction.followUp({content:"✅ BC TRUCK WORKS setup complete! Categories: "+categories+" | Channels: "+channels,ephemeral:true}).catch(()=>{}); });
-    setTimeout(updateStatus,3000);
+    setTimeout(()=>{ updateStatus(); postSupportPanel(interaction.guild).catch(console.error); },3000);
   } catch(e){ console.error("SETUP ERROR:",e); await interaction.editReply("❌ Setup failed: "+e.message); }
 }
 
@@ -277,14 +344,14 @@ client.once("ready",async()=>{
   console.log("Logged in as:",client.user.tag);
   console.log("========================================");
   client.user.setPresence({activities:[{name:"BC TRUCK WORKS • ATS / ETS2",type:ActivityType.Watching}],status:"online"});
-  try{await registerCommands();await ensureRoles(await client.guilds.fetch(GUILD_ID));await updateStatus();await checkGitHubUpdates();}catch(e){console.error("Startup:",e);}
+  try{const guild=await client.guilds.fetch(GUILD_ID);await registerCommands();await ensureRoles(guild);await updateStatus();await postSupportPanel(guild);await checkGitHubUpdates();}catch(e){console.error("Startup:",e);}
   setInterval(updateStatus,300000);
   setInterval(checkGitHubUpdates,120000);
   console.log("BC TRUCK WORKS BOT IS ONLINE");
 });
 
 client.on("interactionCreate",async interaction=>{
-  if(!interaction.isChatInputCommand())return;
+  if(interaction.isStringSelectMenu() && interaction.customId==="bc_ticket_category"){ try { return createTicket(interaction,interaction.values[0]); } catch(e){ console.error("Ticket create:",e); return interaction.reply({content:"❌ I could not create the ticket. Please contact the Support Team.",ephemeral:true}).catch(()=>{}); } }\n  if(interaction.isButton() && interaction.customId==="bc_ticket_close"){ try { await interaction.reply({content:"🔒 Closing this ticket...",ephemeral:true}); setTimeout(()=>interaction.channel.delete("BC TRUCK WORKS support ticket closed").catch(()=>{}),1000); } catch(e){ console.error("Ticket close:",e); } return; }\n  if(!interaction.isChatInputCommand())return;
   try{
     if(interaction.commandName==="setup")return setup(interaction);
     if(interaction.commandName==="status")return interaction.reply({embeds:[statusEmbed()]});
