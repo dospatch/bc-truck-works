@@ -7,6 +7,6 @@
   "theme_color": "#0b6cff",
   "description": "BC TRUCK WORKS mobile Driver Hub and game control center",
   "icons": [
-    {"src":"/bc-truck-works-logo.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+    {"src":"/bc-truck-works-logo.png","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
   ]
 }
