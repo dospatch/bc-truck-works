@@ -86,19 +86,16 @@ async function createTicket(interaction, key){
   if(existing)return interaction.reply({content:"❌ You already have an open support ticket: <#"+existing.id+">",ephemeral:true});
   const supportCategory=guild.channels.cache.find(c=>c.name==="🆘 SUPPORT"&&c.type===ChannelType.GuildCategory);
   const safeName=interaction.user.username.toLowerCase().replace(/[^a-z0-9-]/g,"").slice(0,18)||"driver";
-  const supportRole=guild.roles.cache.find(r=>r.name==="Support Team");
-  const ticketOverwrites=[
-    {id:guild.roles.everyone.id,deny:[PermissionFlagsBits.ViewChannel]},
-    {id:interaction.user.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.AttachFiles]},
-    {id:client.user.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.ManageChannels,PermissionFlagsBits.ManageMessages]}
-  ];
-  if(supportRole) ticketOverwrites.push({id:supportRole.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory]});
   const channel=await guild.channels.create({
     name:"ticket-"+safeName,
     type:ChannelType.GuildText,
     parent:supportCategory?.id,
     topic:"BC-TICKET:"+interaction.user.id,
-    permissionOverwrites:ticketOverwrites
+    permissionOverwrites:[
+      {id:guild.roles.everyone.id,deny:[PermissionFlagsBits.ViewChannel]},
+      {id:interaction.user.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.AttachFiles]},
+      {id:client.user.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.ManageChannels,PermissionFlagsBits.ManageMessages]}
+    ]
   });
   const supportRole=guild.roles.cache.find(r=>r.name==="Support Team");
   const roleMention=supportRole?"<@&"+supportRole.id> ":"";
@@ -421,7 +418,9 @@ client.once("ready",async()=>{
 });
 
 client.on("interactionCreate",async interaction=>{
-  if(interaction.isStringSelectMenu() && interaction.customId==="bc_ticket_category"){ try { return createTicket(interaction,interaction.values[0]); } catch(e){ console.error("Ticket create:",e); return interaction.reply({content:"❌ I could not create the ticket. Please contact the Support Team.",ephemeral:true}).catch(()=>{}); } }\n  if(interaction.isButton() && interaction.customId==="bc_ticket_close"){ try { await interaction.reply({content:"🔒 Closing this ticket...",ephemeral:true}); setTimeout(()=>interaction.channel.delete("BC TRUCK WORKS support ticket closed").catch(()=>{}),1000); } catch(e){ console.error("Ticket close:",e); } return; }\n  if(!interaction.isChatInputCommand())return;
+  if(interaction.isStringSelectMenu() && interaction.customId==="bc_ticket_category"){ try { return createTicket(interaction,interaction.values[0]); } catch(e){ console.error("Ticket create:",e); return interaction.reply({content:"❌ I could not create the ticket. Please contact the Support Team.",ephemeral:true}).catch(()=>{}); } }
+  if(interaction.isButton() && interaction.customId==="bc_ticket_close"){ try { await interaction.reply({content:"🔒 Closing this ticket...",ephemeral:true}); setTimeout(()=>interaction.channel.delete("BC TRUCK WORKS support ticket closed").catch(()=>{}),1000); } catch(e){ console.error("Ticket close:",e); } return; }
+  if(!interaction.isChatInputCommand())return;
   try{
     if(interaction.commandName==="setup")return setup(interaction);
     if(interaction.commandName==="truck"){
