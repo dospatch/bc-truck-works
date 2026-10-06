@@ -100,6 +100,7 @@ async function createTicket(interaction, key){
     topic:"BC-TICKET:"+interaction.user.id,
     permissionOverwrites:ticketOverwrites
   });
+  const supportRole=guild.roles.cache.find(r=>r.name==="Support Team");
   const roleMention=supportRole?"<@&"+supportRole.id> ":"";
   const embed=new EmbedBuilder()
     .setColor(0x2f7fbf)
