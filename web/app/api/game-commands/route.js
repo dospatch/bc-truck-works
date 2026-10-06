@@ -10,7 +10,11 @@ function connectorAuthorized(request) {
   return !!connectorKey && request.headers.get("x-connector-key") === connectorKey;
 }
 
-function discordAuthorized(request) {\n  return !!discordCommandKey && request.headers.get("x-discord-command-key") === discordCommandKey;\n}\n\nexport async function GET(request) {
+function discordAuthorized(request) {
+  return !!discordCommandKey && request.headers.get("x-discord-command-key") === discordCommandKey;
+}
+
+export async function GET(request) {
   try {
     if (connectorAuthorized(request)) {
       const driverId = request.nextUrl.searchParams.get("driverId");
@@ -38,7 +42,8 @@ function discordAuthorized(request) {\n  return !!discordCommandKey && request.h
   }
 }
 
-export async function POST(request) {\n    if (discordAuthorized(request)) {
+export async function POST(request) {
+    if (discordAuthorized(request)) {
       const body = await request.json();
       const discordId = String(body.discordId || "");
       const command = String(body.command || "").toLowerCase().trim();
