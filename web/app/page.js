@@ -40,6 +40,7 @@ export default function Home() {
           <a href="/fleet">Fleet</a>
           <a href="/telemetry">Telemetry</a>
           <a href="/events">Events</a>
+          <a href="/support">Support</a>
         </div>
 
         <a className="nav-button" href="/api/auth/discord">
