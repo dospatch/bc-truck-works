@@ -113,7 +113,7 @@ export default function SupportPage() {
 
       <section className="community">
         <span className="section-label">NEED MORE HELP?</span>
-        <img className="community-logo" src="/bc-truck-works-logo.svg" alt="BC TRUCK WORKS" />
+        <img className="community-logo" src="/bc-truck-works-logo.png" alt="BC TRUCK WORKS" />
         <h2>We can help you get back on the road.</h2>
         <p>
           If something is not working, provide the game, connector status,
