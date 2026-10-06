@@ -4,12 +4,13 @@ import { readSession } from "@/lib/session";
 
 const allowed = new Set(["pause","save","screenshot","echo","route","time"]);
 const connectorKey = process.env.CONNECTOR_COMMAND_KEY || "";
+const discordCommandKey = process.env.DISCORD_COMMAND_API_KEY || "";
 
 function connectorAuthorized(request) {
   return !!connectorKey && request.headers.get("x-connector-key") === connectorKey;
 }
 
-export async function GET(request) {
+function discordAuthorized(request) {\n  return !!discordCommandKey && request.headers.get("x-discord-command-key") === discordCommandKey;\n}\n\nexport async function GET(request) {
   try {
     if (connectorAuthorized(request)) {
       const driverId = request.nextUrl.searchParams.get("driverId");
@@ -37,7 +38,24 @@ export async function GET(request) {
   }
 }
 
-export async function POST(request) {
+export async function POST(request) {\n    if (discordAuthorized(request)) {
+      const body = await request.json();
+      const discordId = String(body.discordId || "");
+      const command = String(body.command || "").toLowerCase().trim();
+      const payload = body.payload && typeof body.payload === "object" ? body.payload : {};
+      if (!discordId) return NextResponse.json({error:"discordId is required"},{status:400});
+      if (!allowed.has(command)) return NextResponse.json({error:"Command is not allowed."},{status:400});
+      const db = getDb();
+      const driver = await db.query("select id from drivers where discord_id=$1 limit 1",[discordId]);
+      if (!driver.rows[0]) return NextResponse.json({error:"Driver profile was not found."},{status:404});
+      const result = await db.query(
+        "insert into game_commands (driver_id,command,payload,status) values ($1,$2,$3,'pending') returning id,command,status,created_at",
+        [driver.rows[0].id,command,payload]
+      );
+      return NextResponse.json({ok:true,command:result.rows[0]});
+    }
+
+
   try {
     if (connectorAuthorized(request)) {
       const body = await request.json();
