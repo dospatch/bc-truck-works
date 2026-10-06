@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const axios = require("axios");
+const { executeGameCommand } = require("./command-bridge");
 
 const ROOT = "C:\\BC-TRUCK-WORKS";
 const CONNECTOR_DIR = path.join(ROOT, "Connector");
@@ -54,6 +55,10 @@ const telemetryUrl =
   "http://127.0.0.1:25555/api/ets2/telemetry";
 
 const apiUrl = config.apiUrl;
+const commandsUrl = config.commandsUrl || (apiUrl ? apiUrl.replace(/\/api\/telemetry\/?$/, "/api/game-commands") : "");
+const connectorKey = config.connectorCommandKey || "";
+const allowGameInput = config.allowGameInput === true;
+const gameWindowTitle = config.gameWindowTitle || (game === "ETS2" ? "Euro Truck Simulator 2" : "American Truck Simulator");
 
 const game =
   String(config.game || "ATS").toUpperCase();
@@ -115,6 +120,46 @@ function normalizeTelemetry(raw) {
 
 let connected = false;
 let lastGame = null;
+
+async function pollCommands() {
+  if (!commandsUrl || !connectorKey || !config.driverId) return;
+  try {
+    const response = await axios.get(commandsUrl, {
+      params: { driverId: config.driverId },
+      timeout: requestTimeout,
+      headers: { "x-connector-key": connectorKey }
+    });
+    const command = response.data?.command;
+    if (!command) return;
+    try {
+      const output = await executeGameCommand(command.command, command.payload || {}, {
+        allowGameInput,
+        gameWindowTitle
+      });
+      await axios.post(commandsUrl, {
+        commandId: command.id,
+        status: "executed",
+        result: output || "Command sent to game."
+      }, {
+        timeout: requestTimeout,
+        headers: { "x-connector-key": connectorKey, "content-type": "application/json" }
+      });
+      log("GAME COMMAND • " + command.command + " • executed");
+    } catch (error) {
+      await axios.post(commandsUrl, {
+        commandId: command.id,
+        status: "failed",
+        result: error.message
+      }, {
+        timeout: requestTimeout,
+        headers: { "x-connector-key": connectorKey, "content-type": "application/json" }
+      }).catch(() => {});
+      log("GAME COMMAND • " + command.command + " • failed • " + error.message);
+    }
+  } catch (error) {
+    // The game-command queue is optional; telemetry remains independent.
+  }
+}
 
 async function poll() {
   try {
@@ -196,12 +241,20 @@ log("================================");
 log(`Installation: ${ROOT}`);
 log(`Game mode: ${game}`);
 log(`Telemetry: ${telemetryUrl}`);
+log(`Game commands: ${commandsUrl || "disabled"}`);
+log(`Game input bridge: ${allowGameInput ? "enabled" : "disabled"}`);
 log("Connector started.");
 log("Waiting for game telemetry...");
 
 poll();
+pollCommands();
 
 setInterval(
   poll,
   interval
+);
+
+setInterval(
+  pollCommands,
+  Math.max(interval, 1500)
 );
