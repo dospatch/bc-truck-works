@@ -20,14 +20,16 @@ for (const dir of [
   fs.mkdirSync(dir, { recursive: true });
 }
 
-const configPath = path.join(CONNECTOR_DIR, "config.json");
+const configCandidates = [path.join(CONFIG_DIR, "config.json"), path.join(CONNECTOR_DIR, "config.json")];
+const configPath = configCandidates.find((file) => fs.existsSync(file));
 
-if (!fs.existsSync(configPath)) {
+if (!configPath) {
   console.error("");
   console.error("BC TRUCK WORKS Connector");
   console.error("--------------------------------");
   console.error("Missing configuration file:");
-  console.error(configPath);
+  console.error(path.join(CONFIG_DIR, "config.json"));
+  console.error(path.join(CONNECTOR_DIR, "config.json"));
   console.error("");
   console.error("Create config.json before starting the connector.");
   process.exit(1);
@@ -43,10 +45,9 @@ try {
   process.exit(1);
 }
 
-const interval = Math.max(
-  Number(config.intervalMs || 2000),
-  1000
-);
+const interval = Math.max(Number(config.intervalMs || 2000), 1000);
+const telemetryTimeout = Math.max(Number(config.telemetryTimeoutMs || 1500), 500);
+const requestTimeout = Math.max(Number(config.requestTimeoutMs || 5000), 1000);
 
 const telemetryUrl =
   config.telemetryUrl ||
@@ -121,7 +122,7 @@ async function poll() {
       await axios.get(
         telemetryUrl,
         {
-          timeout: 1500
+          timeout: telemetryTimeout
         }
       );
 
@@ -160,7 +161,7 @@ async function poll() {
         ...telemetry
       },
       {
-        timeout: 5000,
+        timeout: requestTimeout,
 
         headers: {
           "x-telemetry-key":
