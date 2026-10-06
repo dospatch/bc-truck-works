@@ -32,6 +32,6 @@ C:\BC-TRUCK-WORKS\Plugins\ATS\
 
 The plugin listens only on localhost port 25555 and exposes the connector-compatible telemetry path:
 
-http://127.0.0.1:25555/api/ets2/telemetry
+http://127.0.0.1:25555/api/ats/telemetry
 
 The path is kept connector-compatible for the first integration pass so the existing Windows Connector does not need a breaking configuration change.
