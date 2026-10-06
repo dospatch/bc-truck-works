@@ -149,23 +149,52 @@ async function setup(interaction) {
   await interaction.deferReply({ephemeral:true});
   const me=interaction.guild.members.me;
   if(!me || !me.permissions.has(PermissionFlagsBits.ManageChannels)) return interaction.editReply("❌ I need Manage Channels permission.");
+
   try {
-    await interaction.editReply("🛠️ Rebuilding BC TRUCK WORKS...");
-    for(const c of [...interaction.guild.channels.cache.values()]) if(c.deletable && c.type!==ChannelType.GuildCategory) await c.delete("BC TRUCK WORKS rebuild");
-    for(const c of [...interaction.guild.channels.cache.values()]) if(c.deletable && c.type===ChannelType.GuildCategory) await c.delete("BC TRUCK WORKS rebuild");
-    let categories=0,channels=0;
+    await interaction.editReply("🛠️ Checking BC TRUCK WORKS channels...");
+
+    let categories=0, channels=0;
     for(const [categoryName,channelNames] of layout){
-      const category=await interaction.guild.channels.create({name:categoryName,type:ChannelType.GuildCategory}); categories++;
+      let category=interaction.guild.channels.cache.find(c=>c.name===categoryName && c.type===ChannelType.GuildCategory);
+      if(!category){
+        category=await interaction.guild.channels.create({name:categoryName,type:ChannelType.GuildCategory,reason:"BC TRUCK WORKS additive setup"});
+        categories++;
+      }
+
       for(const name of channelNames){
-        const voice=["🚛│Truckers","◎│Convoy 1","◎│Convoy 2","🎙️│Driver Lounge","🔊│Dispatch"].includes(name);
-        const type=voice?ChannelType.GuildVoice:ChannelType.GuildText;
-        const channel=await interaction.guild.channels.create({name,type,parent:category.id}); channels++;
-        if(type===ChannelType.GuildText && messages[name]) await channel.send(messages[name]);
+        let channel=interaction.guild.channels.cache.find(c=>c.name===name && c.parentId===category.id);
+        if(!channel){
+          const voice=["🚛│Truckers","◎│Convoy 1","◎│Convoy 2","🎙️│Driver Lounge","🔊│Dispatch"].includes(name);
+          const type=voice?ChannelType.GuildVoice:ChannelType.GuildText;
+          channel=await interaction.guild.channels.create({name,type,parent:category.id,reason:"BC TRUCK WORKS additive setup"});
+          channels++;
+          if(type===ChannelType.GuildText && messages[name]) await channel.send(messages[name]).catch(()=>{});
+        }
       }
     }
-    await interaction.editReply("✅ BC TRUCK WORKS setup complete! Categories: "+categories+" | Channels: "+channels).catch(async()=>{ await interaction.followUp({content:"✅ BC TRUCK WORKS setup complete! Categories: "+categories+" | Channels: "+channels,ephemeral:true}).catch(()=>{}); });
-    setTimeout(()=>{ updateStatus(); postSupportPanel(interaction.guild).catch(console.error); },3000);
-  } catch(e){ console.error("SETUP ERROR:",e); await interaction.editReply("❌ Setup failed: "+e.message); }
+
+    const dev=interaction.guild.channels.cache.find(c=>c.name==="🛠️│development" && c.type===ChannelType.GuildText);
+    if(dev){
+      const everyone=interaction.guild.roles.everyone;
+      const staffNames=["TruckWorks Owner","TruckWorks Co-Owner","TruckWorks Director","TruckWorks Manager","Lead Developer","Developer","Web Developer","Bot Developer"];
+      const overwrites=[
+        {id:everyone.id,deny:[PermissionFlagsBits.ViewChannel]},
+        {id:interaction.client.user.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.EmbedLinks]}
+      ];
+      for(const roleName of staffNames){
+        const role=interaction.guild.roles.cache.find(r=>r.name===roleName);
+        if(role) overwrites.push({id:role.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.EmbedLinks]});
+      }
+      await dev.permissionOverwrites.set(overwrites,"BC TRUCK WORKS private development channel").catch(e=>console.error("Development permissions:",e.message));
+    }
+
+    await postSupportPanel(interaction.guild);
+
+    await interaction.editReply("✅ BC TRUCK WORKS setup checked. Added "+categories+" missing categories and "+channels+" missing channels. Existing channels were left untouched.");
+  } catch(e){
+    console.error("SETUP ERROR:",e);
+    await interaction.editReply("❌ Setup failed: "+e.message).catch(()=>{});
+  }
 }
 
 // MUSIC
@@ -249,15 +278,26 @@ function announcementPackage(title,details,commit){
   const commitLine=commit?"\n\nUpdate reference: "+commit.slice(0,7):"";
   return "🚛 **BC TRUCK WORKS UPDATE**\n\n**"+cleanTitle+"**\n\n"+cleanDetails+"\n\nThank you for being part of BC TRUCK WORKS. More improvements are on the way."+commitLine;
 }
-async function sendOwnerUpdate(title,details,commit){
+async function publishDevelopmentUpdate(title,details,commit){
   try{
     const guild=await client.guilds.fetch(GUILD_ID);
-    const ownerId=OWNER_ID || guild.ownerId;
-    if(!ownerId)return;
-    const owner=await client.users.fetch(ownerId);
-    await owner.send(announcementPackage(title,details,commit));
-  }catch(e){console.error("Owner update DM:",e.message);}
+    const channel=guild.channels.cache.find(c=>c.name==="🛠️│development"&&c.type===ChannelType.GuildText);
+    if(!channel)return;
+    const embed=new EmbedBuilder()
+      .setColor(0x9B59B6)
+      .setTitle("🛠️ BC TRUCK WORKS • DEVELOPMENT UPDATE")
+      .setDescription(details)
+      .addFields(
+        {name:"📌 Update",value:title||"Development update"},
+        {name:"🔗 GitHub",value:"https://github.com/"+GITHUB_REPO+"/commit/"+commit,inline:true},
+        {name:"📦 Commit",value:commit.slice(0,7),inline:true}
+      )
+      .setTimestamp()
+      .setFooter({text:"Private development channel • BC TRUCK WORKS"});
+    await channel.send({embeds:[embed]});
+  }catch(e){console.error("Development update:",e.message);}
 }
+
 let lastCommitSha=null;
 function updateCategoryData(message,files){
   const text=String(message||"").toLowerCase();
@@ -297,11 +337,12 @@ function updateEmbed(commit){
 async function publishGitHubUpdate(commit){
   try{
     const guild=await client.guilds.fetch(GUILD_ID);
-    const channel=guild.channels.cache.find(c=>c.name==="📢│announcements"&&c.type===ChannelType.GuildText);
+    const channel=guild.channels.cache.find(c=>c.name==="🛠️│development"&&c.type===ChannelType.GuildText);
     if(!channel)return;
-    const updates=guild.roles.cache.find(r=>r.name===UPDATE_ROLE_NAME);\n    await channel.send({content:updates?"<@&"+updates.id+">":"",embeds:[updateEmbed(commit)],allowedMentions:{roles:updates?[updates.id]:[]}});
-  }catch(e){console.error("GitHub Discord announcement:",e.message);}
+    await channel.send({embeds:[updateEmbed(commit)]});
+  }catch(e){console.error("GitHub development announcement:",e.message);}
 }
+
 async function checkGitHubUpdates(){
   try{
     const r=await fetch("https://api.github.com/repos/"+GITHUB_REPO+"/commits/main",{headers:{"Accept":"application/vnd.github+json","User-Agent":"BC-TRUCK-WORKS-Bot"}});
@@ -313,13 +354,13 @@ async function checkGitHubUpdates(){
     const detailResponse=await fetch("https://api.github.com/repos/"+GITHUB_REPO+"/commits/"+commit.sha,{headers:{"Accept":"application/vnd.github+json","User-Agent":"BC-TRUCK-WORKS-Bot"}});
     const detail=detailResponse.ok?await detailResponse.json():commit;
     const message=(detail.commit?.message||"BC TRUCK WORKS code update").split("\n")[0];
-    await sendOwnerUpdate(message,"A new GitHub update was detected. The bot will publish a clean community announcement after deployment checks.",detail.sha);
+    await publishDevelopmentUpdate(message,"A new GitHub update was detected on the main branch. Development work and deployment details are posted here instead of being sent by DM.",detail.sha);
     await publishGitHubUpdate(detail);
   }catch(e){console.error("GitHub update check:",e.message);}
 }
 
 const commands=[
-  new SlashCommandBuilder().setName("setup").setDescription("Build or rebuild the BC TRUCK WORKS Discord server.").setDefaultMemberPermissions(PermissionFlagsBits.Administrator.toString()),
+  new SlashCommandBuilder().setName("setup").setDescription("Add any missing BC TRUCK WORKS Discord channels and categories without deleting existing channels.").setDefaultMemberPermissions(PermissionFlagsBits.Administrator.toString()),
   new SlashCommandBuilder().setName("status").setDescription("Show bot and server status."),
   new SlashCommandBuilder().setName("truckworks").setDescription("Show BC TRUCK WORKS information."),
   new SlashCommandBuilder().setName("telemetry").setDescription("Show ATS / ETS2 telemetry information."),
