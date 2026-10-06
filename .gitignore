@@ -1,0 +1,11 @@
+node_modules/
+.next/
+dist/
+release/
+coverage/
+.env
+.env.*
+!*.env.example
+connector/config.json
+**/config.local.json
+*.log
