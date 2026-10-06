@@ -112,7 +112,7 @@ Driver Hub + Mobile PWA + Discord
 - `plugins/ats/BCTruckWorksATS.dll`
 - `plugins/ets2/BCTruckWorksETS2.dll`
 
-Both plugins are built against the official SCS Telemetry SDK 1.15 in GitHub Actions. The SDK is downloaded during the build and is not committed to the repository. SCS documents Telemetry SDK 1.15 as the current stable release and notes that SDK 1.14+ also supports basic input devices. citeturn0search1turn1search0
+Both plugins are built against the official SCS Telemetry SDK 1.15 in GitHub Actions. The SDK is downloaded during the build and is not committed to the repository. SCS documents Telemetry SDK 1.15 as the current stable release and notes that SDK 1.14+ also supports basic input devices.
 
 The DLLs must ultimately be installed into the game's `bin\\win_x64\\plugins` directory. The connector then talks to the plugin over localhost.
 
@@ -136,6 +136,6 @@ The new `/truck` command family queues approved game commands:
 - `/truck route`
 - `/truck time`
 
-The desktop connector consumes the command queue and sends the approved command through the game's developer console. SCS documents commands such as `pause`, `save`, `screenshot`, `route`, and `g_set_time`. citeturn1search7
+The desktop connector consumes the command queue and sends the approved command through the game's developer console. SCS documents commands such as `pause`, `save`, `screenshot`, `route`, and `g_set_time`.
 
 For this feature, enable the game console/developer mode and set the connector's `allowGameInput` to `true`. Keep the Discord command API key private.
