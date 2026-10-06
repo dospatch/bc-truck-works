@@ -2,7 +2,7 @@ export default function Fleet() {
   return (
     <main className="platform">
       <nav className="platform-nav">
-        <a className="platform-brand" href="/"><img src="/bc-truck-works-logo.svg" alt="" />BC TRUCK WORKS</a>
+        <a className="platform-brand" href="/"><img src="/bc-truck-works-logo.png" alt="" />BC TRUCK WORKS</a>
         <div className="platform-links">
           <a href="/dashboard">Driver Hub</a><a href="/fleet">Fleet</a><a href="/events">Events</a><a href="/telemetry">Telemetry</a>
         </div>
@@ -14,7 +14,7 @@ export default function Fleet() {
         <p className="muted">A future-ready VTC workspace for drivers, trucks, routes, and company operations.</p>
         <div className="hero-panel">
           <div className="big-card">
-            <img src="/bc-truck-works-logo.svg" alt="" />
+            <img src="/bc-truck-works-logo.png" alt="" />
             <h2>BC Logistics</h2>
             <p className="muted">Community fleet • North America</p>
             <span className="tag">ACTIVE</span>
