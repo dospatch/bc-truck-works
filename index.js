@@ -29,10 +29,31 @@ const layout = [
 ];
 
 const messages = {
-  "📢│announcements": "# 🚛 BC TRUCK WORKS\n\nWelcome to BC TRUCK WORKS!\n\nBuilt for ATS, ETS2, convoys, VTC operations, driver progression and telemetry.",
-  "📌│server-info": "# 📌 SERVER INFO\n\nWebsite: " + WEBSITE_URL + "\n\n🇺🇸 ATS • 🇪🇺 ETS2\n🚛 Driving • 📡 Telemetry • ◎ Convoys • 🏢 VTC • 🏆 Leaderboards",
-  "📡│telemetry": "# 📡 TELEMETRY\n\nTelemetry is collected on the driver's gaming PC through a telemetry provider and the BC TRUCK WORKS Driver Agent.\n\nThe Discord bot cannot directly read ATS / ETS2 telemetry.",
-  "📡│telemetry-help": "# 📡 TELEMETRY HELP\n\n1. Run ATS/ETS2.\n2. Run your telemetry provider.\n3. Run the Driver Agent.\n4. Check the local telemetry endpoint.\n5. Restart telemetry if needed.\n\nNeed help? Use #🎫│support."
+  "📢│announcements": "# 🚛 BC TRUCK WORKS
+
+Welcome to BC TRUCK WORKS!
+
+Built for ATS, ETS2, convoys, VTC operations, driver progression and telemetry.",
+  "📌│server-info": "# 📌 SERVER INFO
+
+Website: " + WEBSITE_URL + "
+
+🇺🇸 ATS • 🇪🇺 ETS2
+🚛 Driving • 📡 Telemetry • ◎ Convoys • 🏢 VTC • 🏆 Leaderboards",
+  "📡│telemetry": "# 📡 TELEMETRY
+
+Telemetry is collected on the driver's gaming PC through a telemetry provider and the BC TRUCK WORKS Driver Agent.
+
+The Discord bot cannot directly read ATS / ETS2 telemetry.",
+  "📡│telemetry-help": "# 📡 TELEMETRY HELP
+
+1. Run ATS/ETS2.
+2. Run your telemetry provider.
+3. Run the Driver Agent.
+4. Check the local telemetry endpoint.
+5. Restart telemetry if needed.
+
+Need help? Use #🎫│support."
 };
 
 function statusEmbed() {
@@ -73,7 +94,10 @@ async function postSupportPanel(guild){
     .setColor(0x2f7fbf)
     .setTitle("🎫 BC TRUCK WORKS SUPPORT")
     .setDescription("Need help? Choose the category that best matches your issue and a private support ticket will be created for you.")
-    .addFields({name:"🌐 Support Center",value:WEBSITE_URL+"/support"},{name:"📋 Ticket Categories",value:"🆘 General Support\n🐛 Bug Report\n📡 Telemetry Help\n💻 Technical Help"})
+    .addFields({name:"🌐 Support Center",value:WEBSITE_URL+"/support"},{name:"📋 Ticket Categories",value:"🆘 General Support
+🐛 Bug Report
+📡 Telemetry Help
+💻 Technical Help"})
     .setFooter({text:"BC TRUCK WORKS • Support Team"});
   await channel.send({embeds:[embed],components:ticketPanelComponents()}).catch(e=>console.error("Support panel:",e.message));
 }
@@ -269,16 +293,49 @@ async function musicQueue(interaction){
   const state=music.get(interaction.guildId);
   if(!state||(!state.current&&!state.queue.length))return interaction.reply("📭 The music queue is empty.");
   const current=state.current?"▶️ **Now:** "+state.current.title:"▶️ **Now:** Nothing";
-  const upcoming=state.queue.length?state.queue.map((s,i)=>(i+1)+". "+s.title).join("\n"):"No upcoming tracks.";
-  return interaction.reply((current+"\n\n**Queue:**\n"+upcoming).slice(0,2000));
+  const upcoming=state.queue.length?state.queue.map((s,i)=>(i+1)+". "+s.title).join("
+"):"No upcoming tracks.";
+  return interaction.reply((current+"
+
+**Queue:**
+"+upcoming).slice(0,2000));
+}
+
+async function queueGameCommand(interaction, command, payload = {}) {
+  const key = process.env.DISCORD_COMMAND_API_KEY;
+  if (!key) return interaction.reply({content:"❌ Game command bridge is not configured yet.",ephemeral:true});
+  try {
+    const response = await fetch(WEBSITE_URL + "/api/game-commands", {
+      method:"POST",
+      headers:{
+        "content-type":"application/json",
+        "x-discord-command-key":key
+      },
+      body:JSON.stringify({discordId:interaction.user.id,command,payload})
+    });
+    const data = await response.json().catch(()=>({}));
+    if (!response.ok) return interaction.reply({content:"❌ " + (data.error || "Your driver profile is not connected."),ephemeral:true});
+    return interaction.reply({content:"🎮 **"+command+"** queued for your BC TRUCK WORKS game.",ephemeral:true});
+  } catch (error) {
+    console.error("Game command:",error.message);
+    return interaction.reply({content:"❌ Game command service is unavailable.",ephemeral:true});
+  }
 }
 
 // OWNER-ONLY UPDATE ASSISTANT
 function announcementPackage(title,details,commit){
   const cleanTitle=title.trim()||"BC TRUCK WORKS Update";
   const cleanDetails=details.trim()||"The latest BC TRUCK WORKS update is now available.";
-  const commitLine=commit?"\n\nUpdate reference: "+commit.slice(0,7):"";
-  return "🚛 **BC TRUCK WORKS UPDATE**\n\n**"+cleanTitle+"**\n\n"+cleanDetails+"\n\nThank you for being part of BC TRUCK WORKS. More improvements are on the way."+commitLine;
+  const commitLine=commit?"
+
+Update reference: "+commit.slice(0,7):"";
+  return "🚛 **BC TRUCK WORKS UPDATE**
+
+**"+cleanTitle+"**
+
+"+cleanDetails+"
+
+Thank you for being part of BC TRUCK WORKS. More improvements are on the way."+commitLine;
 }
 async function publishDevelopmentUpdate(title,details,commit){
   try{
@@ -316,7 +373,8 @@ function updateCategoryData(message,files){
   return {added:[...new Set(added)],improved:[...new Set(improved)],changed:[...new Set(changed)],fixed:[...new Set(fixed)]};
 }
 function updateEmbed(commit){
-  const message=(commit.commit?.message||"BC TRUCK WORKS Development Update").split("\n")[0];
+  const message=(commit.commit?.message||"BC TRUCK WORKS Development Update").split("
+")[0];
   const groups=updateCategoryData(message,commit.files||[]);
   const embed=new EmbedBuilder()
     .setColor(0x2f7fbf)
@@ -325,10 +383,14 @@ function updateEmbed(commit){
     .addFields({name:"🆕 What's New",value:"**"+message+"**"})
     .setTimestamp(new Date(commit.commit?.author?.date||Date.now()))
     .setFooter({text:"BC TRUCK WORKS • Built for the road. Built for the community."});
-  if(groups.added.length)embed.addFields({name:"🆕 Added",value:groups.added.map(x=>"• "+x).join("\n")});
-  if(groups.improved.length)embed.addFields({name:"✨ Improved",value:groups.improved.map(x=>"• "+x).join("\n")});
-  if(groups.changed.length)embed.addFields({name:"🔄 Changed",value:groups.changed.map(x=>"• "+x).join("\n")});
-  if(groups.fixed.length)embed.addFields({name:"🛠️ Fixed",value:groups.fixed.map(x=>"• "+x).join("\n")});
+  if(groups.added.length)embed.addFields({name:"🆕 Added",value:groups.added.map(x=>"• "+x).join("
+")});
+  if(groups.improved.length)embed.addFields({name:"✨ Improved",value:groups.improved.map(x=>"• "+x).join("
+")});
+  if(groups.changed.length)embed.addFields({name:"🔄 Changed",value:groups.changed.map(x=>"• "+x).join("
+")});
+  if(groups.fixed.length)embed.addFields({name:"🛠️ Fixed",value:groups.fixed.map(x=>"• "+x).join("
+")});
   embed.addFields(
     {name:"🌐 Website",value:WEBSITE_URL,inline:true},
     {name:"🔗 GitHub",value:"https://github.com/"+GITHUB_REPO+"/commit/"+commit.sha,inline:true},
@@ -355,7 +417,8 @@ async function checkGitHubUpdates(){
     lastCommitSha=commit.sha;
     const detailResponse=await fetch("https://api.github.com/repos/"+GITHUB_REPO+"/commits/"+commit.sha,{headers:{"Accept":"application/vnd.github+json","User-Agent":"BC-TRUCK-WORKS-Bot"}});
     const detail=detailResponse.ok?await detailResponse.json():commit;
-    const message=(detail.commit?.message||"BC TRUCK WORKS code update").split("\n")[0];
+    const message=(detail.commit?.message||"BC TRUCK WORKS code update").split("
+")[0];
     await publishDevelopmentUpdate(message,"A new GitHub update was detected on the main branch. Development work and deployment details are posted here instead of being sent by DM.",detail.sha);
     await publishGitHubUpdate(detail);
   }catch(e){console.error("GitHub update check:",e.message);}
@@ -372,6 +435,14 @@ const commands=[
   new SlashCommandBuilder().setName("pause").setDescription("Pause the current song."),
   new SlashCommandBuilder().setName("resume").setDescription("Resume the current song."),
   new SlashCommandBuilder().setName("queue").setDescription("Show the music queue."),
+  new SlashCommandBuilder().setName("truck").setDescription("Send an approved command to your connected ATS / ETS2 game.")
+    .addSubcommand(s=>s.setName("status").setDescription("Show your game connection status."))
+    .addSubcommand(s=>s.setName("pause").setDescription("Pause the game through the developer console."))
+    .addSubcommand(s=>s.setName("save").setDescription("Save the current game."))
+    .addSubcommand(s=>s.setName("screenshot").setDescription("Take an in-game screenshot."))
+    .addSubcommand(s=>s.setName("echo").setDescription("Show a message in the game console.").addStringOption(o=>o.setName("message").setDescription("Message").setRequired(true)))
+    .addSubcommand(s=>s.setName("route").setDescription("Run the developer console route command.").addStringOption(o=>o.setName("start").setDescription("Start city/company").setRequired(true)).addStringOption(o=>o.setName("end").setDescription("End city/company").setRequired(true)))
+    .addSubcommand(s=>s.setName("time").setDescription("Set game time.").addIntegerOption(o=>o.setName("hour").setDescription("Hour 0-23").setMinValue(0).setMaxValue(23).setRequired(true)).addIntegerOption(o=>o.setName("minute").setDescription("Minute 0-59").setMinValue(0).setMaxValue(59).setRequired(false))),
   new SlashCommandBuilder().setName("update").setDescription("Owner-only: create a ready-to-post update announcement.").addStringOption(o=>o.setName("title").setDescription("Update title").setRequired(true)).addStringOption(o=>o.setName("details").setDescription("What changed").setRequired(true))
 ].map(c=>c.toJSON());
 
@@ -394,9 +465,24 @@ client.once("ready",async()=>{
 });
 
 client.on("interactionCreate",async interaction=>{
-  if(interaction.isStringSelectMenu() && interaction.customId==="bc_ticket_category"){ try { return createTicket(interaction,interaction.values[0]); } catch(e){ console.error("Ticket create:",e); return interaction.reply({content:"❌ I could not create the ticket. Please contact the Support Team.",ephemeral:true}).catch(()=>{}); } }\n  if(interaction.isButton() && interaction.customId==="bc_ticket_close"){ try { await interaction.reply({content:"🔒 Closing this ticket...",ephemeral:true}); setTimeout(()=>interaction.channel.delete("BC TRUCK WORKS support ticket closed").catch(()=>{}),1000); } catch(e){ console.error("Ticket close:",e); } return; }\n  if(!interaction.isChatInputCommand())return;
+  if(interaction.isStringSelectMenu() && interaction.customId==="bc_ticket_category"){ try { return createTicket(interaction,interaction.values[0]); } catch(e){ console.error("Ticket create:",e); return interaction.reply({content:"❌ I could not create the ticket. Please contact the Support Team.",ephemeral:true}).catch(()=>{}); } }
+if(interaction.isButton() && interaction.customId==="bc_ticket_close"){ try { await interaction.reply({content:"🔒 Closing this ticket...",ephemeral:true}); setTimeout(()=>interaction.channel.delete("BC TRUCK WORKS support ticket closed").catch(()=>{}),1000); } catch(e){ console.error("Ticket close:",e); } return; }
+if(!interaction.isChatInputCommand())return;
   try{
     if(interaction.commandName==="setup")return setup(interaction);
+    if(interaction.commandName==="truck"){
+      const sub=interaction.options.getSubcommand();
+      if(sub==="status"){
+        return interaction.reply({content:"📡 Use the Driver Hub telemetry page to see live telemetry. Game control requires the desktop connector to be online.",ephemeral:true});
+      }
+      if(sub==="pause") return queueGameCommand(interaction,"pause");
+      if(sub==="save") return queueGameCommand(interaction,"save");
+      if(sub==="screenshot") return queueGameCommand(interaction,"screenshot");
+      if(sub==="echo") return queueGameCommand(interaction,"echo",{message:interaction.options.getString("message",true)});
+      if(sub==="route") return queueGameCommand(interaction,"route",{start:interaction.options.getString("start",true),end:interaction.options.getString("end",true)});
+      if(sub==="time") return queueGameCommand(interaction,"time",{hour:interaction.options.getInteger("hour",true),minute:interaction.options.getInteger("minute")||0});
+    }
+
     if(interaction.commandName==="status")return interaction.reply({embeds:[statusEmbed()]});
     if(interaction.commandName==="truckworks")return interaction.reply({embeds:[new EmbedBuilder().setTitle("🚛 BC TRUCK WORKS").setDescription("Trucking community and driver platform for ATS and ETS2.").addFields({name:"🌐 Website",value:WEBSITE_URL},{name:"🛣️ Games",value:"American Truck Simulator and Euro Truck Simulator 2"}).setTimestamp()]});
     if(interaction.commandName==="telemetry")return interaction.reply({embeds:[new EmbedBuilder().setTitle("📡 TELEMETRY").setDescription("Driver-side telemetry connects ATS / ETS2 data to BC TRUCK WORKS.").addFields({name:"Help",value:"Use #📡│telemetry-help or #🎫│support."}).setTimestamp()]});
