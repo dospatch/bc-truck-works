@@ -11,7 +11,7 @@ const groups=[
 export default function Home(){
  return <div className="companion">
   <aside className="companion-sidebar">
-   <Link href="/" className="companion-brand"><img className="companion-brand-logo" src="/bc-truck-works-logo.svg" alt="BC TRUCK WORKS logo"/><div><strong>BC TRUCK WORKS</strong><small>ATS / ETS2 COMPANION</small></div></Link>
+   <Link href="/" className="companion-brand"><img className="companion-brand-logo" src="/bc-truck-works-logo.png" alt="BC TRUCK WORKS logo"/><div><strong>BC TRUCK WORKS</strong><small>ATS / ETS2 COMPANION</small></div></Link>
    <div className="version">LIVE COMPANION v2.1.0</div>
    <nav className="companion-nav">{groups.map(([title,items])=><div className="nav-section" key={title}><div className="nav-heading">{title}</div>{items.map(([icon,label,href])=><Link key={label} href={href} className={"companion-link "+(label==="Drive"?"active":"")}><span>{icon}</span>{label}</Link>)}</div>)}</nav>
    <div className="sidebar-game"><div className="mini-label">SIMULATORS</div><strong>🇺🇸 ATS</strong><strong>🇪🇺 ETS2</strong><span className="live-dot">● READY FOR TELEMETRY</span></div>
