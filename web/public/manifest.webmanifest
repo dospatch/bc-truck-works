@@ -1,0 +1,12 @@
+{
+  "name": "BC TRUCK WORKS",
+  "short_name": "BC Truck Works",
+  "start_url": "/mobile",
+  "display": "standalone",
+  "background_color": "#080b10",
+  "theme_color": "#0b6cff",
+  "description": "BC TRUCK WORKS mobile Driver Hub and game control center",
+  "icons": [
+    {"src":"/bc-truck-works-logo.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+  ]
+}
