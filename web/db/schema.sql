@@ -48,3 +48,17 @@ create table if not exists telemetry (
 );
 create index if not exists trips_driver_idx on trips(driver_id, created_at desc);
 create index if not exists telemetry_driver_idx on telemetry(driver_id, captured_at desc);
+
+create table if not exists game_commands (
+  id bigserial primary key,
+  driver_id bigint references drivers(id) on delete cascade,
+  command varchar(32) not null,
+  payload jsonb default '{}'::jsonb,
+  status varchar(20) not null default 'pending',
+  result text,
+  created_at timestamptz default now(),
+  claimed_at timestamptz,
+  executed_at timestamptz
+);
+create index if not exists game_commands_driver_idx on game_commands(driver_id, created_at desc);
+create index if not exists game_commands_pending_idx on game_commands(status, created_at);
