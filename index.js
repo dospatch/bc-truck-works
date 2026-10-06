@@ -86,18 +86,20 @@ async function createTicket(interaction, key){
   if(existing)return interaction.reply({content:"❌ You already have an open support ticket: <#"+existing.id+">",ephemeral:true});
   const supportCategory=guild.channels.cache.find(c=>c.name==="🆘 SUPPORT"&&c.type===ChannelType.GuildCategory);
   const safeName=interaction.user.username.toLowerCase().replace(/[^a-z0-9-]/g,"").slice(0,18)||"driver";
+  const supportRole=guild.roles.cache.find(r=>r.name==="Support Team");
+  const ticketOverwrites=[
+    {id:guild.roles.everyone.id,deny:[PermissionFlagsBits.ViewChannel]},
+    {id:interaction.user.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.AttachFiles]},
+    {id:client.user.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.ManageChannels,PermissionFlagsBits.ManageMessages]}
+  ];
+  if(supportRole) ticketOverwrites.push({id:supportRole.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory]});
   const channel=await guild.channels.create({
     name:"ticket-"+safeName,
     type:ChannelType.GuildText,
     parent:supportCategory?.id,
     topic:"BC-TICKET:"+interaction.user.id,
-    permissionOverwrites:[
-      {id:guild.roles.everyone.id,deny:[PermissionFlagsBits.ViewChannel]},
-      {id:interaction.user.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.AttachFiles]},
-      {id:client.user.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.ManageChannels,PermissionFlagsBits.ManageMessages]}
-    ]
+    permissionOverwrites:ticketOverwrites
   });
-  const supportRole=guild.roles.cache.find(r=>r.name==="Support Team");
   const roleMention=supportRole?"<@&"+supportRole.id> ":"";
   const embed=new EmbedBuilder()
     .setColor(0x2f7fbf)
