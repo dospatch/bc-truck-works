@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://bctruckworks.vercel.app">
+  <a href="https://bcttruckworks.vercel.app">
     <img src="https://img.shields.io/badge/Website-Live-111827?style=for-the-badge" alt="Website">
   </a>
   <a href="https://github.com/dospatch/bc-truck-works/actions">
