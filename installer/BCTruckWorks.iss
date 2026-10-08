@@ -1,7 +1,7 @@
 #define MyAppName "BC TRUCK WORKS"
 #define MyAppVersion "1.0.0"
 #define MyAppPublisher "BC TRUCK WORKS"
-#define MyAppURL "https://bctruckworks.vercel.app"
+#define MyAppURL "https://bcttruckworks.vercel.app"
 #define MyAppExeName "BCTruckWorksConnector.exe"
 
 [Setup]
