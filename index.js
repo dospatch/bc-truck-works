@@ -98,7 +98,7 @@ async function createTicket(interaction, key){
     ]
   });
   const supportRole=guild.roles.cache.find(r=>r.name==="Support Team");
-  const roleMention=supportRole?"<@&"+supportRole.id> ":"";
+  const roleMention=supportRole?"<@&"+supportRole.id+"> ":"";
   const embed=new EmbedBuilder()
     .setColor(0x2f7fbf)
     .setTitle("🎫 BC TRUCK WORKS SUPPORT TICKET")
