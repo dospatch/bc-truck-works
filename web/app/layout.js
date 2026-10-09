@@ -12,6 +12,9 @@ export const metadata = {
     shortcut: "/bc-truck-works-logo.png",
     apple: "/bc-truck-works-logo.png",
   },
+};
+
+export const viewport = {
   themeColor: "#0b6cff",
 };
 
