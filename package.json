@@ -13,7 +13,9 @@
   "dependencies": {
     "discord.js": "^14.27.0",
     "dotenv": "^16.4.7",
-    "@discordjs/voice": "^0.19.0",
-    "play-dl": "^1.9.7"
+    "@discordjs/voice": "^0.18.0",
+    "play-dl": "^1.9.7",
+    "opusscript": "^0.0.8",
+    "ffmpeg-static": "^5.2.0"
   }
 }
