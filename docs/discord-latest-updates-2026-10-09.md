@@ -12,7 +12,7 @@ BC TRUCK WORKS development is moving toward a simpler, fully branded connection 
 ## 🖥️ Installer & Setup
 - The Windows installer builds through GitHub Actions.
 - Setup attempts to install the matching ATS/ETS2 plugin into detected Steam game folders.
-- A private configuration import wizard is being added so drivers can select their own config file rather than manually creating the file path.
+- The installer source now includes a private configuration import wizard so drivers can select their own config file rather than manually creating the file path. A fresh Windows installer build is running; its result must pass before this build is considered verified.
 - Private configuration files and API keys must never be posted in Discord or committed to GitHub.
 - Game command input remains disabled by default unless intentionally configured and tested.
 
