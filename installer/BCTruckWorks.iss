@@ -61,6 +61,9 @@ Source: "..\connector\README.md"; \
 ; Automatic Steam game plugin setup
 Source: "install-game-plugins.ps1"; DestDir: "{app}\Setup"; Flags: ignoreversion
 
+; Private configuration import wizard
+Source: "configure-connector.ps1"; DestDir: "{app}\Setup"; Flags: ignoreversion
+
 [Dirs]
 
 Name: "{app}\Connector"
@@ -73,11 +76,13 @@ Name: "{app}\Plugins\ETS2"
 Name: "{app}\Config"
 
 Name: "{app}\Updates"
+Name: "{app}\Setup"
 
 [Icons]
 
 Name: "{autodesktop}\\BC TRUCK WORKS"; Filename: "{app}\\Connector\\BCTruckWorksConnector.exe"; WorkingDir: "{app}\\Connector"
 Name: "{group}\\BC TRUCK WORKS"; Filename: "{app}\\Connector\\BCTruckWorksConnector.exe"; WorkingDir: "{app}\\Connector"
+Name: "{group}\\Configure BC TRUCK WORKS"; Filename: "{sys}\\WindowsPowerShell\\v1.0\\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\\Setup\\configure-connector.ps1"""
 Name: "{group}\\BC TRUCK WORKS Website"; Filename: "{#MyAppURL}"
 [Registry]
 
@@ -96,8 +101,14 @@ Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; \
     Description: "Install BC TRUCK WORKS telemetry plugins into detected Steam game folders"; \
     Flags: runhidden waituntilterminated postinstall skipifsilent
 
+Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; \
+    Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\Setup\configure-connector.ps1"""; \
+    Description: "Configure BC TRUCK WORKS by selecting your private config JSON"; \
+    Flags: waituntilterminated postinstall skipifsilent; \
+    Check: not ConfigExists
+
 Filename: "{app}\Connector\BCTruckWorksConnector.exe"; \
-    Description: "Start BC TRUCK WORKS Connector now (requires Config\config.json)"; \
+    Description: "Start BC TRUCK WORKS Connector now"; \
     Flags: nowait postinstall skipifsilent; \
     Check: ConfigExists
 
