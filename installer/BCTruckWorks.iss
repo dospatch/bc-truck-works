@@ -51,6 +51,9 @@ Source: "..\connector\config.example.json"; \
     DestDir: "{app}\Config"; \
     Flags: ignoreversion
 
+; Native telemetry plugins. Copy the matching DLL into the game's bin\win_x64\plugins folder.
+Source: "..\build\ats\Release\BCTruckWorksATS.dll"; DestDir: "{app}\Plugins\ATS"; Flags: ignoreversion
+Source: "..\build\ets2\Release\BCTruckWorksETS2.dll"; DestDir: "{app}\Plugins\ETS2"; Flags: ignoreversion
 ; Connector README
 Source: "..\connector\README.md"; \
     DestDir: "{app}\Connector"; \
