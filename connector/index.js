@@ -50,14 +50,17 @@ const interval = Math.max(Number(config.intervalMs || 2000), 1000);
 const telemetryTimeout = Math.max(Number(config.telemetryTimeoutMs || 1500), 500);
 const requestTimeout = Math.max(Number(config.requestTimeoutMs || 5000), 1000);
 
+const game = String(config.game || "ATS").toUpperCase();
+if (!["ATS", "ETS2"].includes(game)) {
+  console.error(`[BC TRUCK WORKS] Unsupported game "${game}". Set game to ATS or ETS2 in config.json.`);
+  process.exit(1);
+}
+
 const telemetryUrl =
   config.telemetryUrl ||
-  "http://127.0.0.1:25555/api/ets2/telemetry";
+  `http://127.0.0.1:25555/api/${game.toLowerCase()}/telemetry`;
 
 const apiUrl = config.apiUrl;
-
-const game =
-  String(config.game || "ATS").toUpperCase();
 
 const commandsUrl = config.commandsUrl || (apiUrl ? apiUrl.replace(/\/api\/telemetry\/?$/, "/api/game-commands") : "");
 const connectorKey = config.connectorCommandKey || "";
