@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - "docs/discord-latest-updates-2026-10-09.md"
+      - ".github/workflows/publish-discord-updates.yml"
 
 permissions:
   contents: read
