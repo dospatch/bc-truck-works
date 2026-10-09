@@ -55,9 +55,14 @@ The **Driver Hub** is the main web platform for connected BC TRUCK WORKS drivers
 | 📡 Live Drive | Current telemetry |
 | 🛣️ My Miles | Mileage tracking |
 | 📦 Trips | Delivery and trip history |
+| ⛟ Dispatch Starter | Create simple jobs, record routes, and mark deliveries |
 | 🚛 Fleet | Fleet information |
 | 📅 Events | Community events |
 | 🤖 BC AI | Telemetry and driving assistance |
+
+### ⛟ Dispatch Starter
+
+Open `https://bcttruckworks.vercel.app/dispatch` from the Driver Hub or the Windows installer shortcut. The first version lets drivers enter cargo, pickup/delivery cities, estimated miles and pay, then move jobs from Planned to In progress to Delivered. Starter jobs and stats are stored locally in the current browser only; cloud sync and automatic game-job import are future integration work.
 
 ### 👑 Owner Controls
 
