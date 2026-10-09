@@ -27,7 +27,6 @@ ArchitecturesAllowed=x64
 PrivilegesRequired=admin
 
 WizardStyle=modern
-SetupIconFile=..\web\public\bc-truck-works.ico
 
 [Tasks]
 Name: "startup"; \
