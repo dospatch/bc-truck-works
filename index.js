@@ -25,7 +25,8 @@ const layout = [
   ["03 — ATS & ETS2", ["🚛│american-truck-simulator","🚚│euro-truck-simulator-2","🗺️│routes-and-trucks","🎮│mods-and-settings","🏁│convoy-events"]],
   ["04 — DRIVER HUB", ["📡│telemetry-help","📊│driver-statistics","🛣️│trip-reports","🌐│website-support","🎫│support"]],
   ["05 — EVENTS", ["📅│event-announcements","📝│event-signups","📷│event-photos","🔊 Convoy Voice","🔊 General Voice"]],
-  ["06 — STAFF HQ", ["🔒│staff-chat","📋│staff-announcements","🛡️│mod-logs","🎫│ticket-management","📝│staff-reports","🛠️│development"]]
+  ["06 — STAFF HQ", ["🔒│staff-chat","📋│staff-announcements","🛡️│mod-logs","🎫│ticket-management","📝│staff-reports","🛠️│development"]],
+  ["07 — TICKETS", []]
 ];
 
 const messages = {
@@ -88,7 +89,7 @@ async function createTicket(interaction, key){
   }
   const existing=guild.channels.cache.find(c=>c.type===ChannelType.GuildText && c.topic===("BC-TICKET:"+interaction.user.id));
   if(existing) return interaction.editReply("❌ You already have an open support ticket: <#"+existing.id+">");
-  const supportCategory=guild.channels.cache.find(c=>(c.name==="04 — DRIVER HUB"||c.name==="🆘 SUPPORT")&&c.type===ChannelType.GuildCategory);
+  let supportCategory=guild.channels.cache.find(c=>c.name==="07 — TICKETS"&&c.type===ChannelType.GuildCategory);
   const safeName=interaction.user.username.toLowerCase().replace(/[^a-z0-9-]/g,"").slice(0,18)||"driver";
   const supportRoleNames=["Support Team","Moderator","Senior Moderator","TruckWorks Manager","TruckWorks Director","Co-Owner","Owner"];
   const staffRoles=guild.roles.cache.filter(r=>supportRoleNames.includes(r.name));
@@ -100,6 +101,18 @@ async function createTicket(interaction, key){
   for(const role of staffRoles.values()) permissionOverwrites.push({id:role.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.AttachFiles]});
   let channel;
   try{
+    if(!supportCategory){
+      supportCategory=await guild.channels.create({
+        name:"07 — TICKETS",
+        type:ChannelType.GuildCategory,
+        permissionOverwrites:[
+          {id:guild.roles.everyone.id,deny:[PermissionFlagsBits.ViewChannel]},
+          {id:botMember.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.ManageChannels,PermissionFlagsBits.ReadMessageHistory]},
+          ...staffRoles.map(role=>({id:role.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.ReadMessageHistory]}))
+        ],
+        reason:"Create private BC TRUCK WORKS ticket category"
+      });
+    }
     channel=await guild.channels.create({
       name:"ticket-"+safeName,
       type:ChannelType.GuildText,
