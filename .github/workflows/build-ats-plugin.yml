@@ -43,3 +43,5 @@ jobs:
         with:
           name: BCTruckWorksATS
           path: build/ats/Release/BCTruckWorksATS.dll
+
+# Validation run: build the native telemetry plugin for desktop testing.
