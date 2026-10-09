@@ -319,12 +319,13 @@ async function setup(interaction) {
         }
 
         // Keep staff channels private even if a channel already existed with custom overwrites.
-        if (isPrivate) {
+        if (name === "🛠️│development") {
+          // Development is more restricted than the general staff area.
+          try { await channel.permissionOverwrites.set(devOverwrites, "Restrict BC TRUCK WORKS development channel to senior/development staff"); }
+          catch (e) { permissionErrors++; console.error("Development permissions:", e.message); }
+        } else if (isPrivate) {
           try { await channel.permissionOverwrites.set(privateOverwrites, "Secure BC TRUCK WORKS staff channel"); }
           catch (e) { permissionErrors++; console.error("Private channel permissions:", name, e.message); }
-        } else if (name === "🛠️│development") {
-          try { await channel.permissionOverwrites.set(devOverwrites, "Secure BC TRUCK WORKS development channel"); }
-          catch (e) { permissionErrors++; console.error("Development permissions:", e.message); }
         } else if (announcementChannels.has(name)) {
           // Publicly readable announcement channels; only staff roles and the bot can post.
           const readOnlyOverwrites = [
