@@ -84,6 +84,7 @@ Name: "{autodesktop}\\BC TRUCK WORKS"; Filename: "{app}\\Connector\\BCTruckWorks
 Name: "{group}\\BC TRUCK WORKS"; Filename: "{app}\\Connector\\BCTruckWorksConnector.exe"; WorkingDir: "{app}\\Connector"
 Name: "{group}\\Configure BC TRUCK WORKS"; Filename: "{sys}\\WindowsPowerShell\\v1.0\\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\\Setup\\configure-connector.ps1"""
 Name: "{group}\\BC TRUCK WORKS Website"; Filename: "{#MyAppURL}"
+Name: "{group}\\Dispatch Starter"; Filename: "{#MyAppURL}/dispatch"
 [Registry]
 
 Root: HKCU; \
