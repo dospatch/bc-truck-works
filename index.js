@@ -8,7 +8,7 @@ const {
 const TOKEN = process.env.DISCORD_TOKEN;
 const CLIENT_ID = process.env.DISCORD_CLIENT_ID || "1556044045195935775";
 const GUILD_ID = process.env.DISCORD_GUILD_ID || "1546265801500266611";
-const WEBSITE_URL = process.env.TRUCKWORKS_WEBSITE_URL || "https://bcttruckworks.vercel.app";
+const WEBSITE_URL = process.env.TRUCKWORKS_WEBSITE_URL || "https://bctruckworks.vercel.app";
 const OWNER_ID = process.env.OWNER_DISCORD_ID || "";
 const UPDATE_ROLE_NAME = process.env.UPDATE_ROLE_NAME || "Updates";
 const GITHUB_REPO = "dospatch/bc-truck-works";
@@ -18,14 +18,12 @@ if (!TOKEN) { console.error("DISCORD_TOKEN is missing."); process.exit(1); }
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 const layout = [
-  ["🚛 BC TRUCK WORKS • START HERE", ["📢│announcements","📌│server-info","📊│bot-status","💡│suggestions"]],
-  ["💬 COMMUNITY", ["💬│general","🚛│truck-talk","📸│screenshots","🎥│streamers"]],
-  ["🛣️ DRIVING • ATS / ETS2", ["🇺🇸│ats","🇪🇺│ets2","📡│telemetry","📏│miles-and-trips","⛽│fuel-and-rest","🧭│navigation"]],
-  ["◎ CONVOYS", ["📅│convoy-events","🚦│convoy-lobby","📡│convoy-live","🗺️│convoy-routes","🏆│leaderboard"]],
-  ["🏢 VTC • COMPANY", ["🏢│vtc","📋│dispatch","💰│earnings","📈│career","🧾│trip-reports"]],
-  ["🆘 SUPPORT", ["🎫│support","🐛│bug-reports","📡│telemetry-help","💻│technical-help"]],
-  ["🎙️ VOICE • DRIVERS", ["🚛│Truckers","◎│Convoy 1","◎│Convoy 2","🎙️│Driver Lounge","🔊│Dispatch"]],
-  ["🔒 STAFF • TRUCK WORKS", ["🔒│staff-chat","📋│staff-logs","🚨│alerts","🛠️│development","🗃️│admin"]]
+  ["01 — START HERE", ["👋│welcome","📜│rules","📢│announcements","🎭│get-roles","📌│server-guide","📊│bot-status"]],
+  ["02 — COMMUNITY", ["💬│general-chat","📸│screenshots","🎥│clips-and-videos","😂│truckers-memes","🤝│looking-for-convoy"]],
+  ["03 — ATS & ETS2", ["🚛│american-truck-simulator","🚚│euro-truck-simulator-2","🗺️│routes-and-trucks","🎮│mods-and-settings","🏁│convoy-events"]],
+  ["04 — DRIVER HUB", ["📡│telemetry-help","📊│driver-statistics","🛣️│trip-reports","🌐│website-support","🎫│support"]],
+  ["05 — EVENTS", ["📅│event-announcements","📝│event-signups","📷│event-photos","🔊 Convoy Voice","🔊 General Voice"]],
+  ["06 — STAFF HQ", ["🔒│staff-chat","📋│staff-announcements","🛡️│mod-logs","🎫│ticket-management","📝│staff-reports","🛠️│development"]]
 ];
 
 const messages = {
@@ -88,7 +86,7 @@ async function createTicket(interaction, key){
   }
   const existing=guild.channels.cache.find(c=>c.type===ChannelType.GuildText && c.topic===("BC-TICKET:"+interaction.user.id));
   if(existing) return interaction.editReply("❌ You already have an open support ticket: <#"+existing.id+">");
-  const supportCategory=guild.channels.cache.find(c=>c.name==="🆘 SUPPORT"&&c.type===ChannelType.GuildCategory);
+  const supportCategory=guild.channels.cache.find(c=>(c.name==="04 — DRIVER HUB"||c.name==="🆘 SUPPORT")&&c.type===ChannelType.GuildCategory);
   const safeName=interaction.user.username.toLowerCase().replace(/[^a-z0-9-]/g,"").slice(0,18)||"driver";
   const supportRoleNames=["Support Team","Moderator","Senior Moderator","TruckWorks Manager","TruckWorks Director","Co-Owner","Owner"];
   const staffRoles=guild.roles.cache.filter(r=>supportRoleNames.includes(r.name));
@@ -160,71 +158,202 @@ async function ensureRoles(guild){
 }
 async function setup(interaction) {
   if (!interaction.guild) return interaction.reply({content:"❌ Use this command inside the server.",ephemeral:true});
-  if (!interaction.memberPermissions.has(PermissionFlagsBits.Administrator)) return interaction.reply({content:"❌ Administrator permission is required.",ephemeral:true});
+  if (!interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
+    return interaction.reply({content:"❌ Administrator permission is required to run setup.",ephemeral:true});
+  }
+
   await interaction.deferReply({ephemeral:true});
-  const me=interaction.guild.members.me;
-  if(!me || !me.permissions.has(PermissionFlagsBits.ManageChannels)) return interaction.editReply("❌ I need Manage Channels permission.");
+  const guild = interaction.guild;
+  const me = guild.members.me;
+
+  if (!me || !me.permissions.has(PermissionFlagsBits.ManageChannels) || !me.permissions.has(PermissionFlagsBits.ViewChannel)) {
+    return interaction.editReply("❌ I need **Manage Channels** and **View Channels** permissions. Please update my bot role and try again.");
+  }
+  if (!me.permissions.has(PermissionFlagsBits.ManageRoles)) {
+    return interaction.editReply("❌ I also need **Manage Roles** to ensure the BC TRUCK WORKS staff and driver roles exist. Keep the bot role below your own role, but above the roles it needs to manage.");
+  }
 
   try {
-    await interaction.editReply("🛠️ Checking BC TRUCK WORKS channels...");
+    await interaction.editReply("🛠️ Building the BC TRUCK WORKS channel layout and applying permissions. Existing channels will not be deleted or moved.");
 
-    let categories=0, channels=0;
-    for(const [categoryName,channelNames] of layout){
-      let category=interaction.guild.channels.cache.find(c=>c.name===categoryName && c.type===ChannelType.GuildCategory);
-      if(!category){
-        category=await interaction.guild.channels.create({name:categoryName,type:ChannelType.GuildCategory,reason:"BC TRUCK WORKS additive setup"});
-        categories++;
+    // Ensure expected roles exist. This does not assign roles to members or grant Administrator.
+    await ensureRoles(guild);
+    await guild.roles.fetch().catch(() => {});
+    await guild.channels.fetch().catch(() => {});
+
+    const roleNames = [
+      "Owner","Co-Owner","TruckWorks Director","TruckWorks Manager",
+      "Lead Developer","Developer","Web Developer","Bot Developer",
+      "Senior Moderator","Moderator","Support Team"
+    ];
+    const devRoleNames = [
+      "Owner","Co-Owner","TruckWorks Director","TruckWorks Manager",
+      "Lead Developer","Developer","Web Developer","Bot Developer"
+    ];
+    const staffRoles = guild.roles.cache.filter(r => roleNames.includes(r.name));
+    const devRoles = guild.roles.cache.filter(r => devRoleNames.includes(r.name));
+    const everyone = guild.roles.everyone;
+    const botMember = guild.members.me;
+
+    const publicOverwrites = [
+      { id: everyone.id, allow: [
+        PermissionFlagsBits.ViewChannel,
+        PermissionFlagsBits.ReadMessageHistory,
+        PermissionFlagsBits.SendMessages,
+        PermissionFlagsBits.AddReactions,
+        PermissionFlagsBits.EmbedLinks,
+        PermissionFlagsBits.AttachFiles,
+        PermissionFlagsBits.Connect,
+        PermissionFlagsBits.Speak
+      ]},
+      { id: botMember.id, allow: [
+        PermissionFlagsBits.ViewChannel,
+        PermissionFlagsBits.ReadMessageHistory,
+        PermissionFlagsBits.SendMessages,
+        PermissionFlagsBits.EmbedLinks,
+        PermissionFlagsBits.AttachFiles,
+        PermissionFlagsBits.ManageChannels,
+        PermissionFlagsBits.ManageMessages,
+        PermissionFlagsBits.Connect,
+        PermissionFlagsBits.Speak
+      ]}
+    ];
+    for (const role of staffRoles.values()) {
+      publicOverwrites.push({ id: role.id, allow: [
+        PermissionFlagsBits.ViewChannel,
+        PermissionFlagsBits.ReadMessageHistory,
+        PermissionFlagsBits.SendMessages,
+        PermissionFlagsBits.EmbedLinks,
+        PermissionFlagsBits.AttachFiles,
+        PermissionFlagsBits.ManageMessages
+      ]});
+    }
+
+    const privateOverwrites = [
+      { id: everyone.id, deny: [PermissionFlagsBits.ViewChannel] },
+      { id: botMember.id, allow: [
+        PermissionFlagsBits.ViewChannel,
+        PermissionFlagsBits.ReadMessageHistory,
+        PermissionFlagsBits.SendMessages,
+        PermissionFlagsBits.EmbedLinks,
+        PermissionFlagsBits.AttachFiles,
+        PermissionFlagsBits.ManageChannels,
+        PermissionFlagsBits.ManageMessages
+      ]}
+    ];
+    for (const role of staffRoles.values()) {
+      privateOverwrites.push({ id: role.id, allow: [
+        PermissionFlagsBits.ViewChannel,
+        PermissionFlagsBits.ReadMessageHistory,
+        PermissionFlagsBits.SendMessages,
+        PermissionFlagsBits.EmbedLinks,
+        PermissionFlagsBits.AttachFiles
+      ]});
+    }
+
+    const devOverwrites = [
+      { id: everyone.id, deny: [PermissionFlagsBits.ViewChannel] },
+      { id: botMember.id, allow: [
+        PermissionFlagsBits.ViewChannel,
+        PermissionFlagsBits.ReadMessageHistory,
+        PermissionFlagsBits.SendMessages,
+        PermissionFlagsBits.EmbedLinks,
+        PermissionFlagsBits.AttachFiles,
+        PermissionFlagsBits.ManageChannels,
+        PermissionFlagsBits.ManageMessages
+      ]}
+    ];
+    for (const role of devRoles.values()) {
+      devOverwrites.push({ id: role.id, allow: [
+        PermissionFlagsBits.ViewChannel,
+        PermissionFlagsBits.ReadMessageHistory,
+        PermissionFlagsBits.SendMessages,
+        PermissionFlagsBits.EmbedLinks,
+        PermissionFlagsBits.AttachFiles
+      ]});
+    }
+
+    let categoriesAdded = 0;
+    let channelsAdded = 0;
+    let permissionErrors = 0;
+    const privateCategoryNames = new Set(["06 — STAFF HQ"]);
+    const announcementChannels = new Set(["📢│announcements","📅│event-announcements"]);
+
+    for (const [categoryName, channelNames] of layout) {
+      let category = guild.channels.cache.find(c => c.type === ChannelType.GuildCategory && c.name === categoryName);
+      if (!category) {
+        category = await guild.channels.create({
+          name: categoryName,
+          type: ChannelType.GuildCategory,
+          reason: "BC TRUCK WORKS additive server setup"
+        });
+        categoriesAdded++;
       }
 
-      for(const name of channelNames){
-        let channel=interaction.guild.channels.cache.find(c=>c.name===name && c.parentId===category.id);
-        if(!channel){
-          const voice=["🚛│Truckers","◎│Convoy 1","◎│Convoy 2","🎙️│Driver Lounge","🔊│Dispatch"].includes(name);
-          const type=voice?ChannelType.GuildVoice:ChannelType.GuildText;
-          channel=await interaction.guild.channels.create({name,type,parent:category.id,reason:"BC TRUCK WORKS additive setup"});
-          channels++;
-          if(type===ChannelType.GuildText && messages[name]) await channel.send(messages[name]).catch(()=>{});
+      const isPrivate = privateCategoryNames.has(categoryName);
+      const isDevCategory = false;
+      const overwrites = isPrivate ? privateOverwrites : (isDevCategory ? devOverwrites : publicOverwrites);
+      try {
+        await category.permissionOverwrites.set(overwrites, "Configure BC TRUCK WORKS category permissions");
+      } catch (e) {
+        permissionErrors++;
+        console.error("Category permissions:", categoryName, e.message);
+      }
+
+      for (const name of channelNames) {
+        // Match inside this category first. If a same-named channel already exists elsewhere,
+        // leave it where it is and create the requested channel here rather than moving it.
+        let channel = guild.channels.cache.find(c => c.name === name && c.parentId === category.id);
+        if (!channel) {
+          const voice = ["🔊 Convoy Voice","🔊 General Voice"].includes(name);
+          channel = await guild.channels.create({
+            name,
+            type: voice ? ChannelType.GuildVoice : ChannelType.GuildText,
+            parent: category.id,
+            reason: "BC TRUCK WORKS additive server setup"
+          });
+          channelsAdded++;
+          if (channel.type === ChannelType.GuildText && messages[name]) {
+            await channel.send(messages[name]).catch(() => {});
+          }
+        }
+
+        // Keep staff channels private even if a channel already existed with custom overwrites.
+        if (isPrivate) {
+          try { await channel.permissionOverwrites.set(privateOverwrites, "Secure BC TRUCK WORKS staff channel"); }
+          catch (e) { permissionErrors++; console.error("Private channel permissions:", name, e.message); }
+        } else if (name === "🛠️│development") {
+          try { await channel.permissionOverwrites.set(devOverwrites, "Secure BC TRUCK WORKS development channel"); }
+          catch (e) { permissionErrors++; console.error("Development permissions:", e.message); }
+        } else if (announcementChannels.has(name)) {
+          // Publicly readable announcement channels; only staff roles and the bot can post.
+          const readOnlyOverwrites = [
+            { id: everyone.id, allow: [PermissionFlagsBits.ViewChannel,PermissionFlagsBits.ReadMessageHistory], deny: [PermissionFlagsBits.SendMessages] },
+            { id: botMember.id, allow: [PermissionFlagsBits.ViewChannel,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.SendMessages,PermissionFlagsBits.EmbedLinks,PermissionFlagsBits.ManageMessages] }
+          ];
+          for (const role of staffRoles.values()) {
+            readOnlyOverwrites.push({ id: role.id, allow: [PermissionFlagsBits.ViewChannel,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.SendMessages,PermissionFlagsBits.EmbedLinks,PermissionFlagsBits.AttachFiles] });
+          }
+          try { await channel.permissionOverwrites.set(readOnlyOverwrites, "Make BC TRUCK WORKS announcements staff-posted"); }
+          catch (e) { permissionErrors++; console.error("Announcement permissions:", name, e.message); }
         }
       }
     }
 
-    const everyone=interaction.guild.roles.everyone;
-    const staffNames=["Owner","Co-Owner","TruckWorks Director","TruckWorks Manager","Lead Developer","Developer","Web Developer","Bot Developer","Senior Moderator","Moderator","Support Team"];
-    const staffPermissions=[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.EmbedLinks,PermissionFlagsBits.AttachFiles];
-    const staffCategory=interaction.guild.channels.cache.find(c=>c.name==="🔒 STAFF • TRUCK WORKS" && c.type===ChannelType.GuildCategory);
-    if(staffCategory){
-      const staffOverwrites=[
-        {id:everyone.id,deny:[PermissionFlagsBits.ViewChannel]},
-        {id:interaction.client.user.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.ManageChannels,PermissionFlagsBits.ManageMessages]}
-      ];
-      for(const roleName of staffNames){
-        const role=interaction.guild.roles.cache.find(r=>r.name===roleName);
-        if(role) staffOverwrites.push({id:role.id,allow:staffPermissions});
-      }
-      await staffCategory.permissionOverwrites.set(staffOverwrites,"BC TRUCK WORKS private staff category").catch(e=>console.error("Staff category permissions:",e.message));
-      for(const staffChannel of interaction.guild.channels.cache.filter(c=>c.parentId===staffCategory.id).values()){
-        await staffChannel.lockPermissions().catch(e=>console.error("Staff channel permission sync:",staffChannel.name,e.message));
-      }
-    }
-    const dev=interaction.guild.channels.cache.find(c=>c.name==="🛠️│development" && c.type===ChannelType.GuildText);
-    if(dev){
-      const devOverwrites=[
-        {id:everyone.id,deny:[PermissionFlagsBits.ViewChannel]},
-        {id:interaction.client.user.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.EmbedLinks,PermissionFlagsBits.ManageChannels]}
-      ];
-      for(const roleName of staffNames.slice(0,8)){
-        const role=interaction.guild.roles.cache.find(r=>r.name===roleName);
-        if(role) devOverwrites.push({id:role.id,allow:staffPermissions});
-      }
-      await dev.permissionOverwrites.set(devOverwrites,"BC TRUCK WORKS private development channel").catch(e=>console.error("Development permissions:",e.message));
-    }
+    // Ticket channels are placed in Driver Hub, without moving any existing channels.
+    await postSupportPanel(guild);
 
-    await postSupportPanel(interaction.guild);
-
-    await interaction.editReply("✅ BC TRUCK WORKS setup checked. Added "+categories+" missing categories and "+channels+" missing channels. Existing channels were left untouched.");
-  } catch(e){
-    console.error("SETUP ERROR:",e);
-    await interaction.editReply("❌ Setup failed: "+e.message).catch(()=>{});
+    const summary = "✅ **BC TRUCK WORKS setup complete.**\n" +
+      "• Added " + categoriesAdded + " missing categories\n" +
+      "• Added " + channelsAdded + " missing channels\n" +
+      "• Staff HQ is private to authorized staff roles\n" +
+      "• Announcement channels are read-only for regular members\n" +
+      "• Existing channels were not deleted or moved\n" +
+      (permissionErrors ? "⚠️ " + permissionErrors + " permission update(s) failed. Check the NexusHost console for details." : "🔐 Category permissions applied successfully.");
+    await interaction.editReply(summary);
+  } catch (e) {
+    console.error("SETUP ERROR:", e);
+    await interaction.editReply("❌ Setup failed: " + String(e.message || e).slice(0, 700)).catch(() => {});
   }
 }
 
