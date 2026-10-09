@@ -1,4 +1,5 @@
 name: Build BC TRUCK WORKS Windows Installer
+# Rebuild installer after fixing the missing optional icon asset.
 
 on:
   workflow_dispatch:
