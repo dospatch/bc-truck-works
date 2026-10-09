@@ -40,7 +40,7 @@ jobs:
           # Discord message content limit is 2000 characters.
           chunks = []
           while len(announcement) > 1900:
-              split_at = announcement.rfind("\\n\\n", 0, 1900)
+              split_at = announcement.rfind("\n\n", 0, 1900)
               if split_at < 500:
                   split_at = announcement.rfind(" ", 0, 1900)
               if split_at < 1:
