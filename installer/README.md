@@ -18,7 +18,7 @@ with:
 
 ## Startup
 
-The installer can add BC TRUCK WORKS to Windows startup so the connector can run in the background.
+The installer can add BC TRUCK WORKS to Windows startup so the connector can run in the background. It also adds a Start Menu shortcut to the Dispatch Starter at `https://bcttruckworks.vercel.app/dispatch`.
 
 ## Build
 
