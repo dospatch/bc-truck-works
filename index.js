@@ -82,39 +82,55 @@ async function postSupportPanel(guild){
 
 async function createTicket(interaction, key){
   const cfg=ticketCategories[key];
-  if(!cfg)return;
+  if(!cfg) return;
   const guild=interaction.guild;
+  if(!guild) return interaction.editReply("❌ Please open a ticket from inside the BC TRUCK WORKS server.");
+  const botMember=guild.members.me;
+  if(!botMember || !botMember.permissions.has(PermissionFlagsBits.ManageChannels) || !botMember.permissions.has(PermissionFlagsBits.ViewChannel)){
+    return interaction.editReply("❌ I need **Manage Channels** and **View Channels** permissions to create support tickets. Ask a server administrator to fix my role permissions.");
+  }
   const existing=guild.channels.cache.find(c=>c.type===ChannelType.GuildText && c.topic===("BC-TICKET:"+interaction.user.id));
-  if(existing)return interaction.reply({content:"❌ You already have an open support ticket: <#"+existing.id+">",ephemeral:true});
+  if(existing) return interaction.editReply("❌ You already have an open support ticket: <#"+existing.id+">");
   const supportCategory=guild.channels.cache.find(c=>c.name==="🆘 SUPPORT"&&c.type===ChannelType.GuildCategory);
   const safeName=interaction.user.username.toLowerCase().replace(/[^a-z0-9-]/g,"").slice(0,18)||"driver";
-  const channel=await guild.channels.create({
-    name:"ticket-"+safeName,
-    type:ChannelType.GuildText,
-    parent:supportCategory?.id,
-    topic:"BC-TICKET:"+interaction.user.id,
-    permissionOverwrites:[
-      {id:guild.roles.everyone.id,deny:[PermissionFlagsBits.ViewChannel]},
-      {id:interaction.user.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.AttachFiles]},
-      {id:client.user.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.ManageChannels,PermissionFlagsBits.ManageMessages]}
-    ]
-  });
-  const supportRole=guild.roles.cache.find(r=>r.name==="Support Team");
-  const roleMention=supportRole?"<@&"+supportRole.id+"> ":"";
-  const embed=new EmbedBuilder()
-    .setColor(0x2f7fbf)
-    .setTitle("🎫 BC TRUCK WORKS SUPPORT TICKET")
-    .setDescription("Welcome! A member of the Support Team will help you here.")
-    .addFields(
-      {name:"📂 Ticket Category",value:cfg.emoji+" **"+cfg.label+"**",inline:true},
-      {name:"👤 Driver",value:"<@"+interaction.user.id+">",inline:true},
-      {name:"📝 What to include",value:"Please explain the issue, what you were doing, and any error messages you received."},
-      {name:"🌐 Support Center",value:WEBSITE_URL+"/support"}
-    ).setTimestamp();
-  const closeRow=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("bc_ticket_close").setLabel("Close Ticket").setEmoji("🔒").setStyle(ButtonStyle.Danger));
-  await channel.send({content:roleMention+"<@"+interaction.user.id+">",embeds:[embed],components:[closeRow],allowedMentions:{users:[interaction.user.id],roles:supportRole?[supportRole.id]:[]}})
-    .catch(e=>console.error("Ticket message:",e.message));
-  return interaction.reply({content:"✅ Your **"+cfg.label+"** ticket has been created: <#"+channel.id+">",ephemeral:true});
+  const supportRoleNames=["Support Team","Moderator","Senior Moderator","TruckWorks Manager","TruckWorks Director","Co-Owner","Owner"];
+  const staffRoles=guild.roles.cache.filter(r=>supportRoleNames.includes(r.name));
+  const permissionOverwrites=[
+    {id:guild.roles.everyone.id,deny:[PermissionFlagsBits.ViewChannel]},
+    {id:interaction.user.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.AttachFiles]},
+    {id:botMember.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.ManageChannels,PermissionFlagsBits.ManageMessages,PermissionFlagsBits.EmbedLinks]}
+  ];
+  for(const role of staffRoles.values()) permissionOverwrites.push({id:role.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.AttachFiles]});
+  let channel;
+  try{
+    channel=await guild.channels.create({
+      name:"ticket-"+safeName,
+      type:ChannelType.GuildText,
+      parent:supportCategory?.id,
+      topic:"BC-TICKET:"+interaction.user.id,
+      permissionOverwrites,
+      reason:"BC TRUCK WORKS support ticket opened by "+interaction.user.tag
+    });
+    const supportRole=guild.roles.cache.find(r=>r.name==="Support Team");
+    const roleMention=supportRole?"<@&"+supportRole.id+"> ":"";
+    const embed=new EmbedBuilder()
+      .setColor(0x2f7fbf)
+      .setTitle("🎫 BC TRUCK WORKS SUPPORT TICKET")
+      .setDescription("Welcome! A member of the Support Team will help you here.")
+      .addFields(
+        {name:"📂 Ticket Category",value:cfg.emoji+" **"+cfg.label+"**",inline:true},
+        {name:"👤 Driver",value:"<@"+interaction.user.id+">",inline:true},
+        {name:"📝 What to include",value:"Please explain the issue, what you were doing, and any error messages you received."},
+        {name:"🌐 Support Center",value:WEBSITE_URL+"/support"}
+      ).setTimestamp();
+    const closeRow=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("bc_ticket_close").setLabel("Close Ticket").setEmoji("🔒").setStyle(ButtonStyle.Danger));
+    await channel.send({content:roleMention+"<@"+interaction.user.id+">",embeds:[embed],components:[closeRow],allowedMentions:{users:[interaction.user.id],roles:supportRole?[supportRole.id]:[]}});
+    return interaction.editReply("✅ Your **"+cfg.label+"** ticket has been created: <#"+channel.id+">");
+  }catch(e){
+    console.error("Ticket creation failed:",e);
+    if(channel) await channel.delete("Clean up incomplete BC TRUCK WORKS ticket").catch(()=>{});
+    throw e;
+  }
 }
 
 async function updateStatus() {
@@ -420,7 +436,17 @@ client.once("ready",async()=>{
 });
 
 client.on("interactionCreate",async interaction=>{
-  if(interaction.isStringSelectMenu() && interaction.customId==="bc_ticket_category"){ try { return createTicket(interaction,interaction.values[0]); } catch(e){ console.error("Ticket create:",e); return interaction.reply({content:"❌ I could not create the ticket. Please contact the Support Team.",ephemeral:true}).catch(()=>{}); } }
+  if(interaction.isStringSelectMenu() && interaction.customId==="bc_ticket_category"){
+    try{
+      await interaction.deferReply({ephemeral:true});
+      return await createTicket(interaction,interaction.values[0]);
+    }catch(e){
+      console.error("Ticket create:",e);
+      const message="❌ I couldn't create your ticket. "+(e?.code===50013?"The bot is missing a Discord permission. Ask an administrator to grant Manage Channels and View Channels.":e?.message?("Error: "+String(e.message).slice(0,180)):"Please ask a server administrator to check the bot permissions.");
+      if(interaction.deferred||interaction.replied) return interaction.editReply(message).catch(()=>{});
+      return interaction.reply({content:message,ephemeral:true}).catch(()=>{});
+    }
+  }
   if(interaction.isButton() && interaction.customId==="bc_ticket_close"){ try { await interaction.reply({content:"🔒 Closing this ticket...",ephemeral:true}); setTimeout(()=>interaction.channel.delete("BC TRUCK WORKS support ticket closed").catch(()=>{}),1000); } catch(e){ console.error("Ticket close:",e); } return; }
   if(!interaction.isChatInputCommand())return;
   try{
