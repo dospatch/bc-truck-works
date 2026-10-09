@@ -64,6 +64,7 @@ const apiUrl = config.apiUrl;
 
 const commandsUrl = config.commandsUrl || (apiUrl ? apiUrl.replace(/\/api\/telemetry\/?$/, "/api/game-commands") : "");
 const connectorKey = config.connectorCommandKey || "";
+const driverIdentity = config.discordId || config.driverId || "";
 const allowGameInput = config.allowGameInput === true;
 const gameWindowTitle = config.gameWindowTitle || (game === "ETS2" ? "Euro Truck Simulator 2" : "American Truck Simulator");
 
@@ -126,10 +127,10 @@ let connected = false;
 let lastGame = null;
 
 async function pollCommands() {
-  if (!commandsUrl || !connectorKey || !config.driverId) return;
+  if (!commandsUrl || !connectorKey || !driverIdentity) return;
   try {
     const response = await axios.get(commandsUrl, {
-      params: { driverId: config.driverId },
+      params: { driverId: driverIdentity },
       timeout: requestTimeout,
       headers: { "x-connector-key": connectorKey }
     });
@@ -205,7 +206,7 @@ async function poll() {
     await axios.post(
       apiUrl,
       {
-        driverId: config.driverId,
+        driverId: driverIdentity,
         game,
         ...telemetry
       },
