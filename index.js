@@ -4,6 +4,8 @@ const {
   Client, GatewayIntentBits, ActivityType, ChannelType, PermissionFlagsBits,
   SlashCommandBuilder, EmbedBuilder, REST, Routes, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle
 } = require("discord.js");
+const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnectionStatus, entersState } = require("@discordjs/voice");
+const play = require("play-dl");
 
 const TOKEN = process.env.DISCORD_TOKEN;
 const CLIENT_ID = process.env.DISCORD_CLIENT_ID || "1556044045195935775";
@@ -358,6 +360,115 @@ async function setup(interaction) {
   }
 }
 
+// MUSIC — per-server queue, preserving /play /skip /stop /pause /resume /queue
+const music = new Map();
+function getMusic(guildId) {
+  if (!music.has(guildId)) {
+    const player = createAudioPlayer();
+    const state = { queue: [], player, connection: null, textChannel: null, current: null, advancing: false };
+    player.on(AudioPlayerStatus.Idle, () => playNext(guildId).catch(console.error));
+    player.on("error", e => {
+      console.error("Music player:", e.message);
+      playNext(guildId).catch(console.error);
+    });
+    music.set(guildId, state);
+  }
+  return music.get(guildId);
+}
+async function playNext(guildId) {
+  const state = music.get(guildId);
+  if (!state || state.advancing) return;
+  const next = state.queue.shift();
+  if (!next) { state.current = null; return; }
+  state.advancing = true;
+  state.current = next;
+  try {
+    const stream = await play.stream(next.url, { quality: 2 });
+    const resource = createAudioResource(stream.stream, { inputType: stream.type });
+    state.player.play(resource);
+    if (state.textChannel) await state.textChannel.send("▶️ Now playing: **" + next.title + "**").catch(() => {});
+  } catch (e) {
+    console.error("Music stream:", e.message);
+    state.current = null;
+    if (state.textChannel) await state.textChannel.send("❌ I couldn't play **" + next.title + "**. Try another song or YouTube URL.").catch(() => {});
+    state.advancing = false;
+    return playNext(guildId);
+  } finally {
+    state.advancing = false;
+  }
+}
+async function musicPlay(interaction) {
+  const voice = interaction.member?.voice?.channel;
+  if (!voice) return interaction.reply({ content: "❌ Join a voice channel first.", ephemeral: true });
+  const botMember = interaction.guild?.members?.me;
+  const perms = voice.permissionsFor(botMember);
+  if (!perms?.has(PermissionFlagsBits.Connect) || !perms?.has(PermissionFlagsBits.Speak)) {
+    return interaction.reply({ content: "❌ I need **Connect** and **Speak** permissions in your voice channel.", ephemeral: true });
+  }
+  await interaction.deferReply({ ephemeral: true });
+  const query = interaction.options.getString("query", true);
+  const state = getMusic(interaction.guildId);
+  state.textChannel = interaction.channel;
+  try {
+    let result;
+    if (/^https?:\/\//i.test(query)) result = [{ url: query, title: query }];
+    else result = await play.search(query, { limit: 1 });
+    if (!result?.length) return interaction.editReply("❌ I couldn't find that song.");
+    const song = result[0];
+    if (!song.url) return interaction.editReply("❌ That result cannot be played.");
+    if (!state.connection || state.connection.joinConfig.channelId !== voice.id) {
+      if (state.connection) state.connection.destroy();
+      state.connection = joinVoiceChannel({
+        channelId: voice.id, guildId: interaction.guildId,
+        adapterCreator: interaction.guild.voiceAdapterCreator, selfDeaf: true
+      });
+      await entersState(state.connection, VoiceConnectionStatus.Ready, 15000);
+      state.connection.subscribe(state.player);
+    }
+    state.queue.push({ url: song.url, title: song.title || "Unknown track" });
+    if (state.player.state.status !== AudioPlayerStatus.Playing && !state.current && !state.advancing) await playNext(interaction.guildId);
+    return interaction.editReply("🎵 Added to queue: **" + (song.title || "Track") + "**");
+  } catch (e) {
+    console.error("Music error:", e);
+    return interaction.editReply("❌ Music couldn't start. Check Connect/Speak permissions and the NexusHost console.");
+  }
+}
+async function musicStop(interaction) {
+  const state = music.get(interaction.guildId);
+  if (!state) return interaction.reply({ content: "❌ No music is playing.", ephemeral: true });
+  state.queue = [];
+  state.current = null;
+  state.player.stop(true);
+  if (state.connection) state.connection.destroy();
+  music.delete(interaction.guildId);
+  return interaction.reply("⏹️ Music stopped and the queue was cleared.");
+}
+async function musicSkip(interaction) {
+  const state = music.get(interaction.guildId);
+  if (!state || !state.current) return interaction.reply({ content: "❌ Nothing is currently playing.", ephemeral: true });
+  state.player.stop(true);
+  return interaction.reply("⏭️ Skipped.");
+}
+async function musicPause(interaction) {
+  const state = music.get(interaction.guildId);
+  if (!state || !state.current) return interaction.reply({ content: "❌ Nothing is currently playing.", ephemeral: true });
+  state.player.pause();
+  return interaction.reply("⏸️ Paused.");
+}
+async function musicResume(interaction) {
+  const state = music.get(interaction.guildId);
+  if (!state || !state.current) return interaction.reply({ content: "❌ Nothing is currently playing.", ephemeral: true });
+  state.player.unpause();
+  return interaction.reply("▶️ Resumed.");
+}
+async function musicQueue(interaction) {
+  const state = music.get(interaction.guildId);
+  if (!state || (!state.current && !state.queue.length)) return interaction.reply({ content: "📭 The music queue is empty.", ephemeral: true });
+  const current = state.current ? "▶️ **Now:** " + state.current.title : "▶️ **Now:** Nothing";
+  const upcoming = state.queue.length ? state.queue.map((s, i) => (i + 1) + ". " + s.title).join("\n") : "No upcoming tracks.";
+  return interaction.reply({ content: (current + "\n\n**Queue:**\n" + upcoming).slice(0, 2000), ephemeral: true });
+}
+
 async function queueGameCommand(interaction, command, payload = {}) {
   const key = process.env.DISCORD_COMMAND_API_KEY;
   if (!key) return interaction.reply({content:"❌ Game command bridge is not configured yet.",ephemeral:true});
@@ -469,6 +580,12 @@ const commands=[
   new SlashCommandBuilder().setName("status").setDescription("Show bot and server status."),
   new SlashCommandBuilder().setName("truckworks").setDescription("Show BC TRUCK WORKS information."),
   new SlashCommandBuilder().setName("telemetry").setDescription("Show ATS / ETS2 telemetry information."),
+  new SlashCommandBuilder().setName("play").setDescription("Play music in your voice channel.").addStringOption(o=>o.setName("query").setDescription("Song name or YouTube URL").setRequired(true)),
+  new SlashCommandBuilder().setName("skip").setDescription("Skip the current song."),
+  new SlashCommandBuilder().setName("stop").setDescription("Stop music and clear the queue."),
+  new SlashCommandBuilder().setName("pause").setDescription("Pause the current song."),
+  new SlashCommandBuilder().setName("resume").setDescription("Resume the current song."),
+  new SlashCommandBuilder().setName("queue").setDescription("Show the music queue."),
   new SlashCommandBuilder().setName("truck").setDescription("Send an approved command to your connected ATS / ETS2 game.")
     .addSubcommand(s=>s.setName("status").setDescription("Show your game connection status."))
     .addSubcommand(s=>s.setName("pause").setDescription("Pause the game through the developer console."))
@@ -541,6 +658,12 @@ client.on("interactionCreate",async interaction=>{
     if(interaction.commandName==="status")return interaction.reply({embeds:[statusEmbed()]});
     if(interaction.commandName==="truckworks")return interaction.reply({embeds:[new EmbedBuilder().setTitle("🚛 BC TRUCK WORKS").setDescription("Trucking community and driver platform for ATS and ETS2.").addFields({name:"🌐 Website",value:WEBSITE_URL},{name:"🛣️ Games",value:"American Truck Simulator and Euro Truck Simulator 2"}).setTimestamp()]});
     if(interaction.commandName==="telemetry")return interaction.reply({embeds:[new EmbedBuilder().setTitle("📡 TELEMETRY").setDescription("Driver-side telemetry connects ATS / ETS2 data to BC TRUCK WORKS.").addFields({name:"Help",value:"Use #📡│telemetry-help or #🎫│support."}).setTimestamp()]});
+    if(interaction.commandName==="play")return musicPlay(interaction);
+    if(interaction.commandName==="skip")return musicSkip(interaction);
+    if(interaction.commandName==="stop")return musicStop(interaction);
+    if(interaction.commandName==="pause")return musicPause(interaction);
+    if(interaction.commandName==="resume")return musicResume(interaction);
+    if(interaction.commandName==="queue")return musicQueue(interaction);
     if(interaction.commandName==="update"){
       const guildOwnerId=OWNER_ID || interaction.guild?.ownerId;
       if(!guildOwnerId||interaction.user.id!==guildOwnerId)return interaction.reply({content:"❌ This command is owner-only.",ephemeral:true});
