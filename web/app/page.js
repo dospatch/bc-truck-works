@@ -2,7 +2,7 @@ import Link from "next/link";
 
 const groups=[
 ["DRIVE",[["▶","Drive","/"],["◈","ETS2","/telemetry"],["🎙","Co-Driver","/dashboard"],["➤","Navigation","/dashboard"],["▣","Truck Health","/telemetry"],["⇅","Shift Coach","/dashboard"]]],
-["WORK",[["⛟","Dispatch & BOL","/events"],["▤","Trip History","/dashboard"],["▥","Earnings & Stats","/dashboard"],["📷","Driver Journal","/profile"],["🏢","Company / VTC","/fleet"],["★","Career","/profile"]]],
+["WORK",[["⛟","Dispatch Starter","/dispatch"],["▤","Trip History","/dashboard"],["▥","Earnings & Stats","/dashboard"],["📷","Driver Journal","/profile"],["🏢","Company / VTC","/fleet"],["★","Career","/profile"]]],
 ["CONVOY",[["◉","Convoy Hub","/events"],["◎","Convoy","/events"],["🏆","Leaderboard","/dashboard"],["⌖","Convoy Radar","/telemetry"],["⚑","Sessions","/events"],["✔","Pre-Flight","/dashboard"],["✦","Intelligence","/dashboard"],["⌘","Command Center","/dashboard"]]],
 ["STREAM",[["🎥","Stream Studio","/dashboard"],["🎚","Mixer & OBS","/dashboard"]]],
 ["SETUP",[["⚠","Alerts & Discord","/support"],["▦","Dashboard Studio","/dashboard"],["◆","Mods","/dashboard"],["⚙","Settings","/profile"],["💡","Suggestions","/support"]]]
