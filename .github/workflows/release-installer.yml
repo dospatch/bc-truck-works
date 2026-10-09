@@ -1,0 +1,78 @@
+name: Release BC TRUCK WORKS Windows Installer
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install connector dependencies
+        working-directory: connector
+        run: npm install
+
+      - name: Build Windows connector
+        working-directory: connector
+        run: npm run build:windows
+
+      - name: Download official SCS Telemetry SDK
+        shell: powershell
+        run: |
+          Invoke-WebRequest -Uri "https://download.eurotrucksimulator2.com/scs_sdk_1_15.zip" -OutFile "$env:RUNNER_TEMP\scs_sdk_1_15.zip"
+          Expand-Archive -Path "$env:RUNNER_TEMP\scs_sdk_1_15.zip" -DestinationPath "$env:RUNNER_TEMP\scs_sdk_1_15" -Force
+
+      - name: Configure ATS plugin
+        shell: powershell
+        run: |
+          $sdk = "$env:RUNNER_TEMP\scs_sdk_1_15\include"
+          cmake -S plugins/ats -B build/ats -DSCS_SDK_ROOT="$sdk"
+
+      - name: Build ATS plugin
+        run: cmake --build build/ats --config Release
+
+      - name: Configure ETS2 plugin
+        shell: powershell
+        run: |
+          $sdk = "$env:RUNNER_TEMP\scs_sdk_1_15\include"
+          cmake -S plugins/ets2 -B build/ets2 -DSCS_SDK_ROOT="$sdk"
+
+      - name: Build ETS2 plugin
+        run: cmake --build build/ets2 --config Release
+
+      - name: Verify native plugin DLLs
+        shell: powershell
+        run: |
+          if (-not (Test-Path "build/ats/Release/BCTruckWorksATS.dll")) { throw "ATS plugin DLL was not produced." }
+          if (-not (Test-Path "build/ets2/Release/BCTruckWorksETS2.dll")) { throw "ETS2 plugin DLL was not produced." }
+
+      - name: Install Inno Setup
+        shell: powershell
+        run: choco install innosetup --no-progress -y
+
+      - name: Build BC TRUCK WORKS installer
+        shell: powershell
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" `
+            "installer\BCTruckWorks.iss"
+
+      - name: Publish installer to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: BC TRUCK WORKS ${{ github.ref_name }}
+          generate_release_notes: true
+          files: release/BC-TRUCK-WORKS-Setup.exe
