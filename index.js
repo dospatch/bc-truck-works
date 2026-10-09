@@ -205,6 +205,9 @@ async function setup(interaction) {
         if(role) staffOverwrites.push({id:role.id,allow:staffPermissions});
       }
       await staffCategory.permissionOverwrites.set(staffOverwrites,"BC TRUCK WORKS private staff category").catch(e=>console.error("Staff category permissions:",e.message));
+      for(const staffChannel of interaction.guild.channels.cache.filter(c=>c.parentId===staffCategory.id).values()){
+        await staffChannel.lockPermissions().catch(e=>console.error("Staff channel permission sync:",staffChannel.name,e.message));
+      }
     }
     const dev=interaction.guild.channels.cache.find(c=>c.name==="🛠️│development" && c.type===ChannelType.GuildText);
     if(dev){
