@@ -20,9 +20,14 @@ export async function GET(request) {
       const driverId = request.nextUrl.searchParams.get("driverId");
       if (!driverId) return NextResponse.json({error:"driverId is required"},{status:400});
       const db = getDb();
+      const driver = await db.query(
+        "select id from drivers where id::text=$1 or discord_id=$1 limit 1",
+        [String(driverId)]
+      );
+      if (!driver.rows[0]) return NextResponse.json({error:"Driver profile not found. Sign in to the Driver Hub with Discord first."},{status:404});
       const result = await db.query(
         "with next_command as (select id from game_commands where driver_id=$1 and status='pending' order by created_at asc limit 1 for update skip locked) update game_commands set status='claimed',claimed_at=now() where id in (select id from next_command) returning id,command,payload,created_at",
-        [driverId]
+        [driver.rows[0].id]
       );
       return NextResponse.json({command:result.rows[0] || null});
     }
