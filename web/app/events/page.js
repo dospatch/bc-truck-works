@@ -1,33 +1,24 @@
-export default function Events() {
-  const events = [
-    ["BC TRUCK WORKS Community Convoy", "Saturday • 8:00 PM CT", "ATS", "Open"],
-    ["European Night Run", "Next Friday • 7:00 PM CT", "ETS2", "Open"],
-    ["Fleet Challenge", "October • All month", "ATS / ETS2", "Coming Soon"],
-  ];
+import Link from "next/link";
 
+export default function Events() {
   return (
     <main className="platform">
       <nav className="platform-nav">
-        <a className="platform-brand" href="/"><img src="/bc-truck-works-logo.png" alt="" />BC TRUCK WORKS</a>
-        <div className="platform-links">
-          <a href="/dashboard">Driver Hub</a><a href="/fleet">Fleet</a><a href="/events">Events</a><a href="/telemetry">Telemetry</a>
-        </div>
-        <a className="back" href="/dashboard">← Dashboard</a>
+        <Link className="platform-brand" href="/"><img src="/bc-truck-works-logo.png" alt="BC TRUCK WORKS logo" />BC TRUCK WORKS</Link>
+        <div className="platform-links"><Link href="/dispatch">Dispatch</Link><Link href="/telemetry">Telemetry</Link><Link href="/support">Support</Link></div>
+        <Link className="back" href="/">← Home</Link>
       </nav>
       <section className="dashboard">
-        <span className="eyebrow">CONVOYS / EVENTS</span>
-        <h1>Get on the road.</h1>
-        <p className="muted">Organized drives, fleet events, and community challenges in one place.</p>
+        <span className="eyebrow">COMMUNITY</span>
+        <h1>Convoys and events</h1>
+        <p className="muted">The event calendar and attendance tracking are not connected yet. We removed the sample dates so you won't mistake demo information for real events.</p>
         <div className="panel">
-          <table className="table">
-            <thead><tr><th>EVENT</th><th>DATE</th><th>GAME</th><th>STATUS</th></tr></thead>
-            <tbody>{events.map(([name, date, game, status]) => (
-              <tr key={name}><td>{name}</td><td>{date}</td><td><span className="tag">{game}</span></td><td>{status}</td></tr>
-            ))}</tbody>
-          </table>
+          <h2>Join the BC TRUCK WORKS community</h2>
+          <p className="muted">Check the Discord for current convoy announcements, event times, and community updates.</p>
+          <a className="primary" href="https://discord.gg/YFE7tFGEsh" target="_blank" rel="noreferrer">Open BC TRUCK WORKS Discord →</a>
         </div>
       </section>
-      <footer className="footer-bar">Events foundation • Registration, Discord announcements, and attendance tracking will connect next.</footer>
+      <footer className="footer-bar">BC TRUCK WORKS · Community events will be listed here when event scheduling is connected.</footer>
     </main>
   );
 }
