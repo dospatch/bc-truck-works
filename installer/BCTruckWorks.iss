@@ -73,17 +73,9 @@ Name: "{app}\Updates"
 
 [Icons]
 
-Name: "{autodesktop}\BC TRUCK WORKS"
-Filename: "{app}\Connector\BCTruckWorksConnector.exe"
-WorkingDir: "{app}\Connector"
-
-Name: "{group}\BC TRUCK WORKS"
-Filename: "{app}\Connector\BCTruckWorksConnector.exe"
-WorkingDir: "{app}\Connector"
-
-Name: "{group}\BC TRUCK WORKS Website"
-Filename: "{#MyAppURL}"
-
+Name: "{autodesktop}\\BC TRUCK WORKS"; Filename: "{app}\\Connector\\BCTruckWorksConnector.exe"; WorkingDir: "{app}\\Connector"
+Name: "{group}\\BC TRUCK WORKS"; Filename: "{app}\\Connector\\BCTruckWorksConnector.exe"; WorkingDir: "{app}\\Connector"
+Name: "{group}\\BC TRUCK WORKS Website"; Filename: "{#MyAppURL}"
 [Registry]
 
 Root: HKCU; \
