@@ -42,3 +42,5 @@ jobs:
         with:
           name: BCTruckWorksETS2
           path: build/ets2/Release/BCTruckWorksETS2.dll
+
+# Validation run: build the native telemetry plugin for desktop testing.
