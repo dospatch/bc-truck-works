@@ -191,19 +191,32 @@ async function setup(interaction) {
       }
     }
 
-    const dev=interaction.guild.channels.cache.find(c=>c.name==="🛠️│development" && c.type===ChannelType.GuildText);
-    if(dev){
-      const everyone=interaction.guild.roles.everyone;
-      const staffNames=["TruckWorks Owner","TruckWorks Co-Owner","TruckWorks Director","TruckWorks Manager","Lead Developer","Developer","Web Developer","Bot Developer"];
-      const overwrites=[
+    const everyone=interaction.guild.roles.everyone;
+    const staffNames=["Owner","Co-Owner","TruckWorks Director","TruckWorks Manager","Lead Developer","Developer","Web Developer","Bot Developer","Senior Moderator","Moderator","Support Team"];
+    const staffPermissions=[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.EmbedLinks,PermissionFlagsBits.AttachFiles];
+    const staffCategory=interaction.guild.channels.cache.find(c=>c.name==="🔒 STAFF • TRUCK WORKS" && c.type===ChannelType.GuildCategory);
+    if(staffCategory){
+      const staffOverwrites=[
         {id:everyone.id,deny:[PermissionFlagsBits.ViewChannel]},
-        {id:interaction.client.user.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.EmbedLinks]}
+        {id:interaction.client.user.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.ManageChannels,PermissionFlagsBits.ManageMessages]}
       ];
       for(const roleName of staffNames){
         const role=interaction.guild.roles.cache.find(r=>r.name===roleName);
-        if(role) overwrites.push({id:role.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.EmbedLinks]});
+        if(role) staffOverwrites.push({id:role.id,allow:staffPermissions});
       }
-      await dev.permissionOverwrites.set(overwrites,"BC TRUCK WORKS private development channel").catch(e=>console.error("Development permissions:",e.message));
+      await staffCategory.permissionOverwrites.set(staffOverwrites,"BC TRUCK WORKS private staff category").catch(e=>console.error("Staff category permissions:",e.message));
+    }
+    const dev=interaction.guild.channels.cache.find(c=>c.name==="🛠️│development" && c.type===ChannelType.GuildText);
+    if(dev){
+      const devOverwrites=[
+        {id:everyone.id,deny:[PermissionFlagsBits.ViewChannel]},
+        {id:interaction.client.user.id,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.EmbedLinks,PermissionFlagsBits.ManageChannels]}
+      ];
+      for(const roleName of staffNames.slice(0,8)){
+        const role=interaction.guild.roles.cache.find(r=>r.name===roleName);
+        if(role) devOverwrites.push({id:role.id,allow:staffPermissions});
+      }
+      await dev.permissionOverwrites.set(devOverwrites,"BC TRUCK WORKS private development channel").catch(e=>console.error("Development permissions:",e.message));
     }
 
     await postSupportPanel(interaction.guild);
@@ -447,7 +460,20 @@ client.on("interactionCreate",async interaction=>{
       return interaction.reply({content:message,ephemeral:true}).catch(()=>{});
     }
   }
-  if(interaction.isButton() && interaction.customId==="bc_ticket_close"){ try { await interaction.reply({content:"🔒 Closing this ticket...",ephemeral:true}); setTimeout(()=>interaction.channel.delete("BC TRUCK WORKS support ticket closed").catch(()=>{}),1000); } catch(e){ console.error("Ticket close:",e); } return; }
+  if(interaction.isButton() && interaction.customId==="bc_ticket_close"){
+    try {
+      const channel=interaction.channel;
+      const ticketOwnerId=channel?.topic?.startsWith("BC-TICKET:")?channel.topic.slice("BC-TICKET:".length):null;
+      const staffNames=["Owner","Co-Owner","TruckWorks Director","TruckWorks Manager","Lead Developer","Developer","Web Developer","Bot Developer","Senior Moderator","Moderator","Support Team"];
+      const isStaff=interaction.memberPermissions?.has(PermissionFlagsBits.Administrator) || interaction.member?.roles?.cache?.some(r=>staffNames.includes(r.name));
+      if(!ticketOwnerId || (interaction.user.id!==ticketOwnerId && !isStaff)){
+        return interaction.reply({content:"❌ Only the person who opened this ticket or an authorized staff member can close it.",ephemeral:true});
+      }
+      await interaction.reply({content:"🔒 Closing this ticket...",ephemeral:true});
+      setTimeout(()=>channel.delete("BC TRUCK WORKS support ticket closed by "+interaction.user.tag).catch(()=>{}),1000);
+    } catch(e) { console.error("Ticket close:",e); }
+    return;
+  }
   if(!interaction.isChatInputCommand())return;
   try{
     if(interaction.commandName==="setup")return setup(interaction);
