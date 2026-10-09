@@ -5,6 +5,12 @@ on:
   push:
     tags:
       - "v*"
+    paths:
+      - "connector/**"
+      - "plugins/ats/**"
+      - "plugins/ets2/**"
+      - "installer/**"
+      - ".github/workflows/build-installer.yml"
 
 jobs:
   build:
@@ -26,6 +32,36 @@ jobs:
       - name: Build Windows connector
         working-directory: connector
         run: npm run build:windows
+
+      - name: Download official SCS Telemetry SDK
+        shell: powershell
+        run: |
+          Invoke-WebRequest -Uri "https://download.eurotrucksimulator2.com/scs_sdk_1_15.zip" -OutFile "$env:RUNNER_TEMP\scs_sdk_1_15.zip"
+          Expand-Archive -Path "$env:RUNNER_TEMP\scs_sdk_1_15.zip" -DestinationPath "$env:RUNNER_TEMP\scs_sdk_1_15" -Force
+
+      - name: Configure ATS plugin
+        shell: powershell
+        run: |
+          $sdk = "$env:RUNNER_TEMP\scs_sdk_1_15\include"
+          cmake -S plugins/ats -B build/ats -DSCS_SDK_ROOT="$sdk"
+
+      - name: Build ATS plugin
+        run: cmake --build build/ats --config Release
+
+      - name: Configure ETS2 plugin
+        shell: powershell
+        run: |
+          $sdk = "$env:RUNNER_TEMP\scs_sdk_1_15\include"
+          cmake -S plugins/ets2 -B build/ets2 -DSCS_SDK_ROOT="$sdk"
+
+      - name: Build ETS2 plugin
+        run: cmake --build build/ets2 --config Release
+
+      - name: Verify native plugin DLLs
+        shell: powershell
+        run: |
+          if (-not (Test-Path "build/ats/Release/BCTruckWorksATS.dll")) { throw "ATS plugin DLL was not produced." }
+          if (-not (Test-Path "build/ets2/Release/BCTruckWorksETS2.dll")) { throw "ETS2 plugin DLL was not produced." }
 
       - name: Install Inno Setup
         shell: powershell
