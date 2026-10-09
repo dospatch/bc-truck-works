@@ -43,7 +43,7 @@ function statusEmbed() {
       {name:"📡 Discord",value:"🟢 Connected",inline:true},
       {name:"🌐 Website",value:WEBSITE_URL,inline:true},
       {name:"🛣️ Games",value:"ATS / ETS2",inline:true},
-      {name:"⚙️ Version",value:"2.2.0",inline:true}
+      {name:"⚙️ Version",value:"2.3.0",inline:true}
     ).setTimestamp().setFooter({text:"BC TRUCK WORKS"});
 }
 
