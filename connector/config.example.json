@@ -1,7 +1,6 @@
 {
   "game": "ATS",
-  "driverId": "YOUR_DRIVER_ID",
-  "telemetryUrl": "http://127.0.0.1:25555/api/ats/telemetry",
+  "discordId": "YOUR_DISCORD_USER_ID",
   "apiUrl": "https://bcttruckworks.vercel.app/api/telemetry",
   "telemetryApiKey": "YOUR_TELEMETRY_API_KEY",
   "intervalMs": 2000,
