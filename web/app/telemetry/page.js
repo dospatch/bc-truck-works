@@ -34,10 +34,10 @@ export default function Telemetry() {
     return () => clearInterval(timer);
   }, []);
 
-  const telemetry = data?.telemetry;
+  const telemetry = data?.latestTelemetry;
   const driver = data?.driver;
-
-  const connected = Boolean(telemetry);
+  const lastCapturedAt = telemetry?.captured_at ? new Date(telemetry.captured_at).getTime() : 0;
+  const connected = Boolean(lastCapturedAt && Date.now() - lastCapturedAt < 30000);
 
   const speed = telemetry?.speed ?? 0;
   const fuel =
