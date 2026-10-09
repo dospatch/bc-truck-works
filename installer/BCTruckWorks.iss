@@ -58,6 +58,9 @@ Source: "..\connector\README.md"; \
     DestDir: "{app}\Connector"; \
     Flags: ignoreversion
 
+; Automatic Steam game plugin setup
+Source: "install-game-plugins.ps1"; DestDir: "{app}\Setup"; Flags: ignoreversion
+
 [Dirs]
 
 Name: "{app}\Connector"
@@ -88,9 +91,15 @@ Root: HKCU; \
 
 [Run]
 
+Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; \
+    Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\Setup\install-game-plugins.ps1"""; \
+    Description: "Install BC TRUCK WORKS telemetry plugins into detected Steam game folders"; \
+    Flags: runhidden waituntilterminated postinstall skipifsilent
+
 Filename: "{app}\Connector\BCTruckWorksConnector.exe"; \
-    Description: "Start BC TRUCK WORKS Connector now"; \
-    Flags: nowait postinstall skipifsilent
+    Description: "Start BC TRUCK WORKS Connector now (requires Config\config.json)"; \
+    Flags: nowait postinstall skipifsilent; \
+    Check: ConfigExists
 
 [UninstallDelete]
 
@@ -101,6 +110,11 @@ Type: filesandordirs; \
     Name: "{app}\Updates"
 
 [Code]
+
+function ConfigExists: Boolean;
+begin
+  Result := FileExists(ExpandConstant('{app}\Config\config.json'));
+end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
@@ -113,7 +127,10 @@ begin
       'ATS plugin folder:'#13#10 +
       'C:\BC-TRUCK-WORKS\Plugins\ATS'#13#10#13#10 +
       'ETS2 plugin folder:'#13#10 +
-      'C:\BC-TRUCK-WORKS\Plugins\ETS2',
+      'C:\BC-TRUCK-WORKS\Plugins\ETS2'#13#10#13#10 +
+      'Automatic Steam game plugin setup was attempted.'#13#10 +
+      'Check C:\BC-TRUCK-WORKS\Setup\game-plugin-install.log if a game was not detected.'#13#10#13#10 +
+      'The connector starts only when Config\config.json exists.',
       mbInformation,
       MB_OK
     );
