@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 
 const prompts = ["How far to my destination?", "Check my fuel", "When should I rest?", "What gear should I use?", "Damage report", "Tell me a joke"];
+const metrics = [["SPEED","—","mph","◉"],["FUEL","—","live data needed","⛽"],["TO DESTINATION","—","miles","⌖"],["NEXT REST","—","game data needed","◷"],["DEADLINE","—","not available","▤"],["ECO SCORE","—","trip data needed","✦"],["ALERTS","0","local callouts","♧"]];
 const baseCallouts = { speed: true, speeding: true, milestones: true, rest: true, fuel: true, damage: true, shift: true };
 const panel = { background: "linear-gradient(145deg,#101d30,#080f1b)", border: "1px solid #233d59", borderRadius: 13, padding: 16, boxShadow: "0 12px 30px #0004" };
 const field = { width: "100%", minWidth: 0, boxSizing: "border-box", color: "#eef6ff", background: "#0a1423", border: "1px solid #294562", borderRadius: 8, padding: 11 };
