@@ -12,12 +12,13 @@ const CLIENT_ID = process.env.DISCORD_CLIENT_ID || "1556044045195935775";
 const GUILD_ID = process.env.DISCORD_GUILD_ID || "1546265801500266611";
 const WEBSITE_URL = process.env.TRUCKWORKS_WEBSITE_URL || "https://bctruckworks.vercel.app";
 const OWNER_ID = process.env.OWNER_DISCORD_ID || "";
+const WELCOME_CHANNEL_NAME = process.env.WELCOME_CHANNEL_NAME || "👋│welcome";
 const UPDATE_ROLE_NAME = process.env.UPDATE_ROLE_NAME || "Updates";
 const GITHUB_REPO = "dospatch/bc-truck-works";
 
 if (!TOKEN) { console.error("DISCORD_TOKEN is missing."); process.exit(1); }
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers] });
 
 const layout = [
   ["01 — START HERE", ["👋│welcome","📜│rules","📢│announcements","🎭│get-roles","📌│server-guide","📊│bot-status"]],
@@ -126,13 +127,16 @@ async function createTicket(interaction, key){
     const embed=new EmbedBuilder()
       .setColor(0x2f7fbf)
       .setTitle("🎫 BC TRUCK WORKS SUPPORT TICKET")
-      .setDescription("Welcome! A member of the Support Team will help you here.")
+      .setDescription("Welcome to **BC TRUCK WORKS Support**. Your ticket is private to you and our authorized support team. We'll work with you to get you back on the road.")
       .addFields(
         {name:"📂 Ticket Category",value:cfg.emoji+" **"+cfg.label+"**",inline:true},
         {name:"👤 Driver",value:"<@"+interaction.user.id+">",inline:true},
-        {name:"📝 What to include",value:"Please explain the issue, what you were doing, and any error messages you received."},
+        {name:"📋 Help Us Help You",value:"Please describe the issue, what you were doing when it happened, and any error messages. Include the affected service or simulator (ATS/ETS2) and attach relevant screenshots or logs when helpful."},
+        {name:"🔐 Privacy Reminder",value:"Never share passwords, authentication tokens, or other private credentials in a ticket."},
         {name:"🌐 Support Center",value:WEBSITE_URL+"/support"}
-      ).setTimestamp();
+      )
+      .setFooter({text:"BC TRUCK WORKS • Serious Trucking. Connected Drivers. One Community."})
+      .setTimestamp();
     const closeRow=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("bc_ticket_close").setLabel("Close Ticket").setEmoji("🔒").setStyle(ButtonStyle.Danger));
     await channel.send({content:roleMention+"<@"+interaction.user.id+">",embeds:[embed],components:[closeRow],allowedMentions:{users:[interaction.user.id],roles:supportRole?[supportRole.id]:[]}});
     return interaction.editReply("✅ Your **"+cfg.label+"** ticket has been created: <#"+channel.id+">");
@@ -626,6 +630,45 @@ client.once("ready",async()=>{
   setInterval(updateStatus,300000);
   setInterval(checkGitHubUpdates,120000);
   console.log("BC TRUCK WORKS BOT IS ONLINE");
+});
+
+client.on("guildMemberAdd", async member => {
+  try {
+    if (member.guild.id !== GUILD_ID) return;
+    const channel = member.guild.channels.cache.find(
+      c => c.name === WELCOME_CHANNEL_NAME && c.type === ChannelType.GuildText
+    );
+    if (!channel) {
+      console.warn("Welcome message skipped: channel not found:", WELCOME_CHANNEL_NAME);
+      return;
+    }
+
+    const embed = new EmbedBuilder()
+      .setColor(0x2f7fbf)
+      .setTitle("🚛 WELCOME TO BC TRUCK WORKS")
+      .setDescription(
+        "Welcome aboard, <@" + member.id + ">!\n\n" +
+        "**Serious Trucking. Connected Drivers. One Community.**\n\n" +
+        "We're glad you've joined our community for American Truck Simulator (ATS), Euro Truck Simulator 2 (ETS2), virtual trucking fleets, organized convoys, telemetry, and driver tracking."
+      )
+      .addFields(
+        { name: "📜 Community Guidelines", value: "Review the server rules and expectations.", inline: true },
+        { name: "👤 Driver Hub", value: "Explore your driver profile and available features.", inline: true },
+        { name: "🖥️ Windows Connector", value: "Set up supported desktop integration.", inline: true },
+        { name: "📡 ATS / ETS2 Telemetry", value: "Connect supported telemetry and tracking services.", inline: true },
+        { name: "🚛 Community & Convoys", value: "Meet fellow drivers and join community activities.", inline: true }
+      )
+      .setFooter({ text: "YOUR JOURNEY. YOUR MILES. YOUR LEGACY. • BC TRUCK WORKS" })
+      .setTimestamp();
+
+    await channel.send({
+      content: "🚛 Welcome aboard, <@" + member.id + ">!",
+      embeds: [embed],
+      allowedMentions: { users: [member.id] }
+    });
+  } catch (error) {
+    console.error("Welcome message failed:", error);
+  }
 });
 
 client.on("interactionCreate",async interaction=>{
