@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 const nav = [
-  ["DRIVE", [["▶", "Drive", "/dashboard"], ["✦", "Co-Driver", "/copilot"], ["➤", "Navigation", "/navigation"], ["▣", "Truck Health", "/truck-health"], ["⚙", "Under the Hood", "/truck-health"], ["⇅", "Shift Coach", "/copilot"]]],
+  ["DRIVE", [["▶", "Drive", "/dashboard"], ["✦", "Co-Driver", "/live-companion"], ["➤", "Navigation", "/navigation"], ["▣", "Truck Health", "/truck-health"], ["⚙", "Under the Hood", "/truck-health"], ["⇅", "Shift Coach", "/copilot"]]],
   ["WORK", [["▰", "Dispatch & BOL", "/dispatch"], ["▤", "Trip History", "/trips"], ["▥", "Earnings & Stats", "/earnings"], ["▧", "Journal", "/journal"], ["▦", "Company", "/fleet"], ["★", "Career", "/career"]]],
   ["CONVOY", [["◉", "Convoy Hub", "/convoy"], ["⊙", "Convoy", "/convoy"], ["🏆", "Leaderboard", "/leaderboard"], ["♦", "Convoy Radar", "/convoy"], ["⚑", "Convoy Sessions", "/events"], ["✓", "Convoy Pre-Flight", "/events"], ["✦", "Convoy Intelligence", "/copilot"], ["⌘", "Command Center", "/dashboard"]]],
   ["STREAM", [["▣", "Stream Studio", "/stream"], ["▤", "Mixer & OBS", "/stream"]]],
