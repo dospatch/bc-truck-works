@@ -64,9 +64,18 @@ const apiUrl = config.apiUrl;
 
 const commandsUrl = config.commandsUrl || (apiUrl ? apiUrl.replace(/\/api\/telemetry\/?$/, "/api/game-commands") : "");
 const connectorKey = config.connectorCommandKey || "";
-const driverIdentity = config.discordId || config.driverId || "";
+const driverIdentity = String(config.discordId || config.driverId || "").trim();
+const telemetryApiKey = String(config.telemetryApiKey || "").trim();
 const allowGameInput = config.allowGameInput === true;
 const gameWindowTitle = config.gameWindowTitle || (game === "ETS2" ? "Euro Truck Simulator 2" : "American Truck Simulator");
+
+if (!apiUrl || !telemetryApiKey || !driverIdentity) {
+  console.error("[BC TRUCK WORKS] Configuration is incomplete.");
+  if (!apiUrl) console.error(" - Set apiUrl in Config\\config.json.");
+  if (!telemetryApiKey || telemetryApiKey.startsWith("YOUR_")) console.error(" - Set telemetryApiKey to the same secret as Vercel TELEMETRY_API_KEY.");
+  if (!driverIdentity || driverIdentity.startsWith("YOUR_")) console.error(" - Set discordId to your numeric Discord user ID and sign in to Driver Hub once to create your driver profile.");
+  process.exit(1);
+}
 
 function log(message) {
   const timestamp = new Date().toISOString();
@@ -234,9 +243,15 @@ async function poll() {
       );
     }
 
-    log(
-      "Waiting for ATS/ETS2 telemetry..."
-    );
+    const status = error.response?.status;
+    const detail = status
+      ? `Cloud API returned HTTP ${status}`
+      : error.code === "ECONNREFUSED"
+        ? "Local telemetry service refused the connection. Start ATS and confirm the BC TRUCK WORKS plugin is installed."
+        : error.code === "ETIMEDOUT"
+          ? "Telemetry request timed out."
+          : error.message;
+    log(`Waiting for ATS/ETS2 telemetry... • ${detail}`);
   }
 }
 
