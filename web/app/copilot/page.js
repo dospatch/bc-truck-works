@@ -1,56 +1,130 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useState } from "react";
+
+const suggestions = [
+  "Give me a driving summary",
+  "What is my current speed?",
+  "Check my telemetry connection",
+  "How many miles have I tracked?",
+];
+
 
 export default function CoDriverPage() {
-  const [voiceOn, setVoiceOn] = useState(false);
-  const [message, setMessage] = useState("");
-  const [reply, setReply] = useState("Connect ATS or ETS2 telemetry to let BC monitor your drive. Until then, this page stays in setup mode and will not claim to be receiving live vehicle data.");
+  const [driverData, setDriverData] = useState(null);
+  const [question, setQuestion] = useState("");
+  const [reply, setReply] = useState("Hey driver — I’m BC AI, your BC TRUCK WORKS Co-Driver. Ask me about your drive, telemetry, miles, trips, or deliveries.");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
 
-  function ask() {
-    const q = message.trim();
-    if (!q) return;
-    setReply("Your question is saved in this session. Live driving advice will be available when the BC TRUCK WORKS AI service and simulator telemetry are connected. For now, check the connector status before relying on any driving alerts.");
-    setMessage("");
+  useEffect(() => {
+    fetch("/api/driver", { cache: "no-store" })
+      .then(async (response) => response.ok ? response.json() : null)
+      .then((data) => { if (data) setDriverData(data); })
+      .catch(() => {});
+  }, []);
+
+  async function ask(message = question) {
+    const prompt = message.trim();
+    if (!prompt || busy) return;
+    setBusy(true);
+    setError("");
+    setQuestion("");
+    try {
+      const response = await fetch("/api/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: prompt,
+          driver: driverData?.driver || null,
+          telemetry: driverData?.latestTelemetry || null,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "BC AI could not answer right now.");
+      setReply(data.reply || "I’m here, driver. Try asking me about your trip or telemetry.");
+    } catch (err) {
+      setError(err.message || "Could not reach BC AI. Please try again.");
+    } finally {
+      setBusy(false);
+    }
   }
 
-  return <main className="platform" style={{minHeight:"100vh",background:"#070b12",color:"#eef5ff",padding:"24px",fontFamily:"Arial, sans-serif"}}>
-    <div style={{maxWidth:1100,margin:"0 auto"}}>
-      <nav style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,flexWrap:"wrap",borderBottom:"1px solid #203447",paddingBottom:18,marginBottom:22}}>
-        <Link href="/" style={{color:"#63b4ff",fontWeight:800,textDecoration:"none"}}>← BC TRUCK WORKS</Link>
-        <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
-          <Link href="/dashboard" style={{color:"#c7d7e8"}}>Driver Hub</Link>
-          <Link href="/telemetry" style={{color:"#c7d7e8"}}>Telemetry</Link>
-          <Link href="/settings" style={{color:"#c7d7e8"}}>Settings</Link>
+  return (
+    <main className="platform">
+      <nav className="platform-nav">
+        <Link className="platform-brand" href="/">
+          <img src="/bc-truck-works-logo.png" alt="" />
+          <span>BC TRUCK WORKS</span>
+        </Link>
+        <div className="platform-links">
+          <Link href="/dashboard">Driver Hub</Link>
+          <Link href="/telemetry">Telemetry</Link>
+          <Link href="/support">Support</Link>
         </div>
       </nav>
-      <p style={{color:"#60b3ff",fontWeight:800,letterSpacing:".15em",fontSize:11}}>DRIVER INTELLIGENCE</p>
-      <h1 style={{fontSize:"clamp(28px,5vw,44px)",margin:"8px 0"}}>BC AI Co-Driver</h1>
-      <p style={{color:"#9bb0c6",maxWidth:720,lineHeight:1.7}}>Your companion for trip awareness, route updates, fuel planning, and driving reminders across American Truck Simulator and Euro Truck Simulator 2.</p>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(230px,1fr))",gap:14,marginTop:24}}>
-        <section style={{background:"#101b29",border:"1px solid #25435c",borderRadius:14,padding:18}}>
-          <div style={{fontSize:11,color:"#8ca8c3",fontWeight:800}}>VOICE ASSISTANT</div>
-          <h2 style={{fontSize:22,margin:"12px 0"}}>{voiceOn?"Voice preference enabled":"Voice preference off"}</h2>
-          <p style={{color:"#91a7bc",fontSize:13,lineHeight:1.6}}>This toggle records your preference in this page only. It does not start audio until voice service is configured.</p>
-          <button onClick={()=>setVoiceOn(v=>!v)} style={{background:voiceOn?"#173d32":"#12304a",color:"#eef5ff",border:"1px solid #31536e",padding:"10px 14px",borderRadius:8,cursor:"pointer"}}>{voiceOn?"Turn voice preference off":"Turn voice preference on"}</button>
-        </section>
-        <section style={{background:"#101b29",border:"1px solid #25435c",borderRadius:14,padding:18}}>
-          <div style={{fontSize:11,color:"#8ca8c3",fontWeight:800}}>SIMULATOR CONNECTION</div>
-          <h2 style={{fontSize:22,margin:"12px 0",color:"#f3b64b"}}>Waiting for telemetry</h2>
-          <p style={{color:"#91a7bc",fontSize:13,lineHeight:1.6}}>The website can be online while the game connector is offline. Start your simulator and connector to enable live trip awareness.</p>
-          <Link href="/telemetry" style={{color:"#60b3ff",fontWeight:700}}>Check telemetry →</Link>
-        </section>
-      </div>
-      <section style={{background:"#101b29",border:"1px solid #25435c",borderRadius:14,padding:18,marginTop:14}}>
-        <h2 style={{fontSize:17,marginTop:0}}>Co-Driver message</h2>
-        <div role="status" style={{background:"#0b1420",borderLeft:"3px solid #4ca8ff",padding:14,borderRadius:8,color:"#c2d4e7",lineHeight:1.7}}>{reply}</div>
-        <form onSubmit={e=>{e.preventDefault();ask();}} style={{display:"flex",gap:10,marginTop:14,flexWrap:"wrap"}}>
-          <input value={message} onChange={e=>setMessage(e.target.value)} placeholder="Ask about your trip, fuel, or route…" style={{flex:"1 1 260px",background:"#080f18",border:"1px solid #29445d",borderRadius:8,padding:12,color:"#f4f8ff"}}/>
-          <button type="submit" style={{background:"#1678c9",color:"white",border:0,borderRadius:8,padding:"11px 18px",fontWeight:800,cursor:"pointer"}}>Ask Co-Driver</button>
-        </form>
+
+      <section className="dashboard" style={{ maxWidth: 1000 }}>
+        <span className="eyebrow">DRIVER COMPANION • BC AI</span>
+        <h1>Meet your Co-Driver.</h1>
+        <p className="muted" style={{ maxWidth: 700 }}>
+          A second set of eyes for your BC TRUCK WORKS journey. Ask about live
+          telemetry, speed, fuel, odometer readings, tracked miles, trips, and
+          deliveries. Live answers depend on your account and game data being connected.
+        </p>
+
+        <div className="panel-grid" style={{ marginTop: 30, gridTemplateColumns: "minmax(0, 1.4fr) minmax(260px, .6fr)" }}>
+          <section className="panel" aria-live="polite">
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+              <div style={{ width: 48, height: 48, display: "grid", placeItems: "center", borderRadius: 14, background: "#132b40", fontSize: 25 }}>✦</div>
+              <div>
+                <h2 style={{ margin: 0 }}>BC AI Co-Driver</h2>
+                <span className="muted" style={{ fontSize: 12 }}>Your journey. Your miles. Your legacy.</span>
+              </div>
+            </div>
+            <div style={{ padding: 18, borderRadius: 12, border: "1px solid #263646", background: "#09111a", lineHeight: 1.8, whiteSpace: "pre-wrap" }}>
+              {busy ? "BC AI is checking that for you…" : reply}
+            </div>
+            {error && <p role="alert" style={{ color: "#ff9a9a", fontSize: 13 }}>{error}</p>}
+            <form onSubmit={(event) => { event.preventDefault(); ask(); }} style={{ display: "flex", gap: 10, marginTop: 16 }}>
+              <input
+                value={question}
+                onChange={(event) => setQuestion(event.target.value)}
+                placeholder="Ask your Co-Driver a question…"
+                aria-label="Ask your Co-Driver a question"
+                style={{ flex: 1, minWidth: 0, padding: "14px 15px", borderRadius: 10, border: "1px solid #263646", background: "#080e15", color: "#f5f7fa" }}
+              />
+              <button className="primary" type="submit" disabled={busy || !question.trim()} style={{ border: 0, cursor: busy ? "wait" : "pointer" }}>
+                {busy ? "Thinking…" : "Ask AI →"}
+              </button>
+            </form>
+          </section>
+
+          <aside className="panel">
+            <h2>Quick questions</h2>
+            <p className="muted" style={{ fontSize: 12, marginTop: -8 }}>Choose a prompt to get started.</p>
+            <div style={{ display: "grid", gap: 10 }}>
+              {suggestions.map((item) => (
+                <button key={item} type="button" className="action" onClick={() => ask(item)} disabled={busy} style={{ textAlign: "left", color: "#f5f7fa", cursor: busy ? "wait" : "pointer" }}>
+                  <b>{item}</b><span>Ask BC AI →</span>
+                </button>
+              ))}
+            </div>
+            <div style={{ marginTop: 22, paddingTop: 16, borderTop: "1px solid #202d3b" }}>
+              <span className="eyebrow">DRIVER STATUS</span>
+              <p style={{ marginBottom: 6, fontSize: 13 }}>{driverData?.driver ? "Account connected" : "Sign in to view your account data"}</p>
+              <p className="muted" style={{ fontSize: 12, marginTop: 0 }}>{driverData?.latestTelemetry ? "Latest telemetry received." : "Waiting for live game telemetry."}</p>
+              {!driverData?.driver && <Link className="primary" href="/api/auth/discord">Login with Discord →</Link>}
+            </div>
+          </aside>
+        </div>
+
+        <div style={{ display: "flex", gap: 18, flexWrap: "wrap", marginTop: 24 }}>
+          <Link className="back" href="/dashboard">← Back to Driver Hub</Link>
+          <Link className="back" href="/telemetry">Open Telemetry →</Link>
+        </div>
       </section>
-      <p style={{color:"#7189a1",fontSize:11,marginTop:22}}>BC TRUCK WORKS • CO-DRIVER • Live driving alerts require working AI configuration and real game telemetry.</p>
-    </div>
-  </main>;
+    </main>
+  );
 }
