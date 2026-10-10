@@ -10,7 +10,6 @@ const suggestions = [
   "How many miles have I tracked?",
 ];
 
-export const metadata = undefined;
 
 export default function CoDriverPage() {
   const [driverData, setDriverData] = useState(null);
